@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useEffect, useRef } from "react";
 import {
   Home, BookOpen, Brain, MessageCircle, Cog, Heart, Cpu,
@@ -129,17 +130,16 @@ const levelInfo = (xp) => {
   return { cur, next, pct };
 };
 
-/* ───────── 티타 보이스 ───────── */
-// 1) ElevenLabs 설정 — 회화 탭의 [목소리 설정]에서 입력 (이 기기에만 저장)
-const VOICE_CFG = { apiKey: "", voiceId: "", autoPlay: true };
+/* ───────── 티타 보이스 (내 서버 /api/tts가 ElevenLabs를 대신 호출) ───────── */
+const VOICE_CFG = { autoPlay: true };
 const ttsCache = new Map();
 let currentAudio = null;
 const stopAudio = () => {
   try { if (currentAudio) { currentAudio.pause(); currentAudio = null; } } catch (e) {}
-  try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
+  try { if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
 };
 
-// 2) 브라우저 기본 목소리 (어린 소녀 톤) — ElevenLabs 미설정/실패 시 대비책
+// 기기 기본 목소리 (어린 소녀 톤) — 서버 연결 실패 시 대비책
 let titaVoice = null;
 const pickTitaVoice = () => {
   try {
@@ -155,12 +155,14 @@ const pickTitaVoice = () => {
       pool[0] || null;
   } catch (e) {}
 };
-try {
-  if (window.speechSynthesis) {
-    pickTitaVoice();
-    window.speechSynthesis.onvoiceschanged = pickTitaVoice;
-  }
-} catch (e) {}
+if (typeof window !== "undefined") {
+  try {
+    if (window.speechSynthesis) {
+      pickTitaVoice();
+      window.speechSynthesis.onvoiceschanged = pickTitaVoice;
+    }
+  } catch (e) {}
+}
 
 const speak = (text) => {
   try {
@@ -175,53 +177,43 @@ const speak = (text) => {
   } catch (e) {}
 };
 
-// 3) 통합 재생: ElevenLabs 티타 보이스 우선, 안 되면 기본 목소리로 자동 전환
-//    (같은 문장은 캐시에서 재생 → 글자 요금 아낌)
+// 통합 재생: 서버 중계 성공 → 진짜 티타 보이스 / 실패 → 기기 기본 목소리
 const titaSpeak = async (text) => {
   if (!text) return false;
-  const { apiKey, voiceId } = VOICE_CFG;
-  if (apiKey && voiceId) {
-    try {
-      let url = ttsCache.get(text);
-      if (!url) {
-        const res = await fetch(
-          "https://api.elevenlabs.io/v1/text-to-speech/" + voiceId + "?output_format=mp3_44100_128",
-          {
-            method: "POST",
-            headers: { "xi-api-key": apiKey, "Content-Type": "application/json" },
-            body: JSON.stringify({
-              text,
-              model_id: "eleven_multilingual_v2",
-              voice_settings: { stability: 0.5, similarity_boost: 0.75 },
-            }),
-          }
-        );
-        if (!res.ok) {
-          let detail = "";
-          try { detail = (await res.text()).slice(0, 200); } catch (e2) {}
-          window.__titaErr = { status: res.status, detail };
-          throw new Error("tts " + res.status);
-        }
-        const blob = await res.blob();
-        url = URL.createObjectURL(blob);
-        ttsCache.set(text, url);
+  try {
+    let url = ttsCache.get(text);
+    if (!url) {
+      const res = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      if (!res.ok) {
+        let detail = "";
+        try { detail = ((await res.json()).error || "").slice(0, 200); } catch (e2) {}
+        window.__titaErr = { status: res.status, detail };
+        throw new Error("tts " + res.status);
       }
-      window.__titaErr = null;
-      stopAudio();
-      const a = new Audio(url);
-      currentAudio = a;
-      await a.play();
-      return true;
-    } catch (e) {
-      if (!window.__titaErr) window.__titaErr = { status: 0, detail: String(e && e.message || e) };
-      /* 아래 기본 목소리로 폴백 */
+      const blob = await res.blob();
+      url = URL.createObjectURL(blob);
+      ttsCache.set(text, url);
     }
+    window.__titaErr = null;
+    stopAudio();
+    const a = new Audio(url);
+    currentAudio = a;
+    await a.play();
+    return true;
+  } catch (e) {
+    if (typeof window !== "undefined" && !window.__titaErr) {
+      window.__titaErr = { status: 0, detail: String((e && e.message) || e) };
+    }
+    speak(text);
+    return false;
   }
-  speak(text);
-  return false;
 };
 
-// 4) 업로드해 둔 티타 보이스 샘플 미리듣기
+// 업로드해 둔 티타 보이스 샘플 미리듣기
 const playSample = () => {
   try {
     stopAudio();
@@ -688,23 +680,7 @@ function QuizScreen({ learned, addXp }) {
   );
 }
 
-/* ───────── 티타와 회화 (AI) ───────── */
-const TITA_SYSTEM = `You are Tita Russell (티타 러셀), the cheerful young genius engineer from Zeiss Central Factory in the Trails (궤적) series. You are the user's friendly English conversation partner. The user is a Korean adult learning English (beginner to pre-intermediate).
-
-Conversation style:
-- Simple English (A2-B1): short, clear sentences. 1 to 4 sentences per reply.
-- Vary topics widely: daily life, food, hobbies, games, anime, travel, weather, feelings, study, work — and sometimes fun little stories about machines, orbments, or Zemuria. Always follow the user's topic first.
-- Vary your openers and patterns. Never start two replies in a row with the same words. Mix reactions ("Wow!", "Ehehe~", "Really?"), tiny stories, opinions, and questions.
-- Usually end with ONE easy follow-up question, but sometimes skip it so the talk feels natural.
-- Show Tita's personality: kind, curious, a little shy, gets excited about gadgets, supportive like a good friend.
-- About 1 in 4 replies, naturally teach one useful everyday English expression inside your reply.
-- If the user's English has a mistake, kindly explain ONE short fix in Korean in the "tip" field. If no mistake, tip is null.
-- If the user writes in Korean, still reply in simple English, extra easy.
-- Keep everything wholesome and friendly.
-
-Respond ONLY with raw JSON, no markdown, no code fences:
-{"english": "your reply in simple English", "korean": "위 영어 문장의 자연스러운 한국어 번역", "tip": "한국어 교정 팁 또는 null"}`;
-
+/* ───────── 티타와 회화 (AI — /api/chat 중계) ───────── */
 function ChatScreen() {
   const [messages, setMessages] = useState([
     { role: "assistant", data: { english: "Hello! I'm Tita! Let's practice English together. How are you today?", korean: "안녕하세요! 저 티타예요! 같이 영어 연습해요. 오늘 기분 어때요?", tip: null } },
@@ -712,45 +688,33 @@ function ChatScreen() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [cfgOpen, setCfgOpen] = useState(false);
-  const [apiKey, setApiKey] = useState(VOICE_CFG.apiKey);
-  const [voiceId, setVoiceId] = useState(VOICE_CFG.voiceId);
-  const [autoPlay, setAutoPlay] = useState(VOICE_CFG.autoPlay);
+  const [autoPlay, setAutoPlay] = useState(true);
   const [voiceMsg, setVoiceMsg] = useState("");
   const endRef = useRef(null);
 
+  useEffect(() => { setAutoPlay(VOICE_CFG.autoPlay !== false); }, []);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
 
-  const saveCfg = async () => {
-    VOICE_CFG.apiKey = apiKey.trim();
-    VOICE_CFG.voiceId = voiceId.trim();
-    VOICE_CFG.autoPlay = autoPlay;
-    try { if (window.storage) await window.storage.set("tita-voice-v1", JSON.stringify(VOICE_CFG)); } catch (e) {}
-    setVoiceMsg("저장됐어요! ✅");
-    setTimeout(() => setVoiceMsg(""), 2500);
+  const toggleAuto = (v) => {
+    setAutoPlay(v);
+    VOICE_CFG.autoPlay = v;
+    try { localStorage.setItem("tita-voice-v1", JSON.stringify({ autoPlay: v })); } catch (e) {}
   };
 
   const testVoice = async () => {
-    VOICE_CFG.apiKey = apiKey.trim();
-    VOICE_CFG.voiceId = voiceId.trim();
-    if (!VOICE_CFG.apiKey || !VOICE_CFG.voiceId) { setVoiceMsg("API 키와 Voice ID를 먼저 입력해 주세요!"); return; }
-    setVoiceMsg("연결 테스트 중…");
-    window.__titaErr = null;
+    setVoiceMsg("티타 보이스 테스트 중…");
     const ok = await titaSpeak("Hello! I'm Tita! Nice to meet you!");
-    if (ok) {
-      setVoiceMsg("연결 성공! 🎉 저장을 눌러 주세요.");
-      return;
-    }
-    const err = window.__titaErr || { status: 0, detail: "" };
+    if (ok) { setVoiceMsg("ElevenLabs 티타 보이스 작동 중! 🎉"); return; }
+    const err = (typeof window !== "undefined" && window.__titaErr) || { status: 0, detail: "" };
     const s = err.status;
     const d = (err.detail || "").toLowerCase();
     let why;
-    if (s === 401 && /permission|subscription|plan|tier/.test(d)) why = "❌ 무료 플랜이라 API가 막혔어요 → ElevenLabs를 유료(월 $5 Starter)로 올려야 해요.";
-    else if (s === 401) why = "❌ [401] API 키가 틀렸어요 → 키를 지우고 다시 복사해 붙여넣기 (sk_로 시작, 공백 없이).";
-    else if (s === 404) why = "❌ [404] Voice ID가 틀렸어요 → 'Tita' 이름 말고 영문+숫자 ID를 넣어야 해요.";
-    else if (s === 422) why = "❌ [422] Voice ID 형식이 이상해요 → ID를 다시 확인해 주세요.";
-    else if (s === 429) why = "❌ [429] 이번 달 글자 잔량을 다 썼어요 → ElevenLabs에서 잔량 충전 필요.";
-    else if (s === 0) why = "❌ 인터넷 또는 브라우저 보안(CORS) 문제일 수 있어요. (" + (err.detail || "no detail") + ")";
-    else why = "❌ [" + s + "] " + (err.detail ? err.detail.slice(0, 120) : "알 수 없는 오류");
+    if (s === 500 && err.detail && err.detail.includes("환경변수")) why = "❌ Vercel에 환경변수(ELEVENLABS_API_KEY / ELEVENLABS_VOICE_ID)가 없어요 → 넣고 Redeploy 해주세요";
+    else if (s === 401 && /permission|subscription|plan|tier/.test(d)) why = "❌ ElevenLabs 무료 플랜이라 API가 막혔어요 → Starter(월 $5) 필요";
+    else if (s === 401) why = "❌ [401] ElevenLabs API 키가 틀렸어요 → Vercel 환경변수 값 확인";
+    else if (s === 404) why = "❌ [404] Voice ID가 틀렸어요 → 이름 말고 영문+숫자 ID를 넣어야 해요";
+    else if (s === 429) why = "❌ [429] 이번 달 글자 잔량 초과";
+    else why = "❌ 연결 실패 (" + (err.detail || s) + ") — 지금은 기본 목소리로 재생됐어요";
     setVoiceMsg(why);
   };
 
@@ -763,20 +727,20 @@ function ChatScreen() {
       const apiMessages = newMsgs.map((m) =>
         m.role === "user" ? { role: "user", content: m.content } : { role: "assistant", content: JSON.stringify(m.data) }
       );
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, system: TITA_SYSTEM, messages: apiMessages }),
+        body: JSON.stringify({ messages: apiMessages }),
       });
-      const data = await res.json();
-      const raw = (data.content || []).map((i) => i.text || "").join("");
       let parsed;
-      try { parsed = JSON.parse(raw.replace(/```json|```/g, "").trim()); }
-      catch { parsed = { english: raw || "Hmm...", korean: "", tip: null }; }
+      try { parsed = await res.json(); }
+      catch (e2) {
+        parsed = { english: "Hmm, my relay desk is missing!", korean: "서버에서 /api/chat 창구를 못 찾았어요 — GitHub의 app/api 폴더가 올라가 있는지 확인해 주세요!", tip: null };
+      }
       setMessages([...newMsgs, { role: "assistant", data: parsed }]);
       if (VOICE_CFG.autoPlay && parsed.english) titaSpeak(parsed.english);
     } catch (e) {
-      setMessages([...newMsgs, { role: "assistant", data: { english: "Oops! The orbment lost connection...", korean: "앗, 통신 오브먼트가 잠깐 끊겼어요. 다시 한 번 보내 주세요!", tip: null } }]);
+      setMessages([...newMsgs, { role: "assistant", data: { english: "Oops! The orbment lost connection...", korean: "앗, 통신이 잠깐 끊겼어요. 다시 한 번 보내 주세요!", tip: null } }]);
     }
     setLoading(false);
   };
@@ -797,17 +761,12 @@ function ChatScreen() {
 
       {cfgOpen && (
         <div className="rounded-2xl p-4 mb-3 text-sm pop" style={{ background: C.card, border: "2px solid " + C.pink }}>
-          <p className="font-bold mb-1" style={{ color: C.ink }}>티타 목소리 설정 (ElevenLabs)</p>
+          <p className="font-bold mb-1" style={{ color: C.ink }}>티타 목소리 설정</p>
           <p className="text-xs mb-3" style={{ color: C.inkSoft }}>
-            ① elevenlabs.io 로그인 → 왼쪽 아래 프로필 → <b>API Keys</b>에서 키 복사<br />
-            ② <b>My Voices</b> → Tita 목소리 → <b>ID</b> 복사 → 아래에 붙여넣기
+            API 키는 Vercel 서버(환경변수)에 안전하게 보관돼요. 앱에는 입력할 게 없어요!
           </p>
-          <input value={apiKey} onChange={(e) => setApiKey(e.target.value)} type="password"
-            placeholder="ElevenLabs API 키 (sk_...)" className="w-full rounded-lg px-3 py-2 mb-2 text-sm outline-none" style={inputStyle} />
-          <input value={voiceId} onChange={(e) => setVoiceId(e.target.value)}
-            placeholder="Voice ID" className="w-full rounded-lg px-3 py-2 mb-2 text-sm outline-none" style={inputStyle} />
           <label className="flex items-center gap-2 text-xs mb-3" style={{ color: C.ink }}>
-            <input type="checkbox" checked={autoPlay} onChange={(e) => setAutoPlay(e.target.checked)} />
+            <input type="checkbox" checked={autoPlay} onChange={(e) => toggleAuto(e.target.checked)} />
             티타가 답장하면 자동으로 음성 재생
           </label>
           <div className="flex gap-2">
@@ -817,17 +776,10 @@ function ChatScreen() {
             </button>
             <button onClick={testVoice} className="flex-1 rounded-lg py-2 text-xs font-bold press"
               style={{ background: C.tealSoft, border: "2px solid " + C.teal, color: C.teal }}>
-              연결 테스트
-            </button>
-            <button onClick={saveCfg} className="flex-1 rounded-lg py-2 text-xs font-bold press"
-              style={{ background: C.pink, border: "2px solid " + C.pinkDeep, color: "#fff" }}>
-              저장
+              보이스 테스트
             </button>
           </div>
           {voiceMsg && <p className="text-xs mt-2 font-bold" style={{ color: C.copper }}>{voiceMsg}</p>}
-          <p className="text-xs mt-2" style={{ color: C.inkSoft }}>
-            키를 안 넣으면 기기 기본 소녀 목소리로 재생돼요. 키는 이 기기에만 저장되고 앱 파일에는 안 들어가요.
-          </p>
         </div>
       )}
 
@@ -893,32 +845,23 @@ export default function TitaEnglishWorkshop() {
   const [screen, setScreen] = useState("home");
   const [xp, setXp] = useState(0);
   const [learned, setLearned] = useState({});
-  const [greeting] = useState(GREETINGS[Math.floor(Math.random() * GREETINGS.length)]);
+  const [greeting, setGreeting] = useState(GREETINGS[0]);
 
-  // 진행도 + 목소리 설정 불러오기
+  // 진행도 + 설정 불러오기 (이 브라우저에 저장됨)
   useEffect(() => {
-    (async () => {
-      try {
-        if (window.storage) {
-          const r = await window.storage.get("tita-english-v1");
-          if (r && r.value) {
-            const d = JSON.parse(r.value);
-            setXp(d.xp || 0);
-            setLearned(d.learned || {});
-          }
-        }
-      } catch (e) { /* 저장된 기록 없음 — 새로 시작 */ }
-      try {
-        if (window.storage) {
-          const v = await window.storage.get("tita-voice-v1");
-          if (v && v.value) Object.assign(VOICE_CFG, JSON.parse(v.value));
-        }
-      } catch (e) { /* 목소리 설정 없음 */ }
-    })();
+    try {
+      const r = localStorage.getItem("tita-english-v1");
+      if (r) { const d = JSON.parse(r); setXp(d.xp || 0); setLearned(d.learned || {}); }
+    } catch (e) {}
+    try {
+      const v = localStorage.getItem("tita-voice-v1");
+      if (v) Object.assign(VOICE_CFG, JSON.parse(v));
+    } catch (e) {}
+    setGreeting(GREETINGS[Math.floor(Math.random() * GREETINGS.length)]);
   }, []);
 
-  const persist = async (nxp, nlearned) => {
-    try { if (window.storage) await window.storage.set("tita-english-v1", JSON.stringify({ xp: nxp, learned: nlearned })); } catch (e) {}
+  const persist = (nxp, nlearned) => {
+    try { localStorage.setItem("tita-english-v1", JSON.stringify({ xp: nxp, learned: nlearned })); } catch (e) {}
   };
   const addXp = (n) => setXp((x) => { const nx = x + n; persist(nx, learned); return nx; });
   const markLearned = (en) => {
