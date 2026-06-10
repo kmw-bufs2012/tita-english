@@ -89,14 +89,26 @@ const SETS = [
 ];
 
 const ALL_WORDS = SETS.flatMap((s) => s.words.map((w) => ({ ...w, setId: s.id })));
-const TOTAL_WORDS = ALL_WORDS.length;
+const TOTAL_WORDS_SPECIAL = ALL_WORDS.length;
+
+/* ───────── 중학 영단어 1800 (Day당 20개) ───────── */
+const WORD_LIB =
+  "people|사람들;person|사람;family|가족;parent|부모;mother|어머니;father|아버지;brother|남자 형제;sister|여자 형제;grandmother|할머니;grandfather|할아버지;uncle|삼촌;aunt|이모, 고모;cousin|사촌;daughter|딸;son|아들;baby|아기;child|아이;adult|어른;neighbor|이웃;friend|친구;classmate|반 친구;partner|짝, 동료;husband|남편;wife|아내;couple|부부, 한 쌍;twin|쌍둥이;teenager|십대;elder|연장자;relative|친척;stranger|낯선 사람;guest|손님;host|주인, 진행자;visitor|방문객;crowd|군중;member|구성원;leader|지도자;captain|주장, 선장;president|대통령, 회장;king|왕;queen|여왕;prince|왕자;princess|공주;soldier|군인;police|경찰;officer|경찰관, 장교;doctor|의사;nurse|간호사;dentist|치과의사;vet|수의사;patient|환자;teacher|선생님;professor|교수;student|학생;scientist|과학자;engineer|기술자;artist|예술가;musician|음악가;singer|가수;actor|배우;dancer|무용수;writer|작가;poet|시인;reporter|기자;journalist|언론인;photographer|사진작가;designer|디자이너;chef|요리사;cook|요리하다, 요리사;waiter|웨이터;baker|제빵사;farmer|농부;fisherman|어부;driver|운전사;pilot|조종사;sailor|선원;firefighter|소방관;lawyer|변호사;judge|판사;businessman|사업가;clerk|점원, 사무원;secretary|비서;manager|관리자;boss|상사;worker|노동자;employee|직원;employer|고용주;staff|직원들;volunteer|자원봉사자;expert|전문가;genius|천재;hero|영웅;champion|챔피언;athlete|운동선수;coach|코치;player|선수;magician|마술사;clown|광대;guard|경비원;thief|도둑;school|학교;classroom|교실;class|수업, 학급;grade|학년, 성적;elementary|초등의;university|대학교;college|대학;academy|학원;kindergarten|유치원;lesson|수업, 교훈;subject|과목, 주제;math|수학;science|과학;history|역사;geography|지리;art|미술, 예술;music|음악;language|언어;English|영어;Korean|한국어;homework|숙제;test|시험;exam|시험;quiz|퀴즈;question|질문;answer|대답;problem|문제;solution|해답;example|예시;textbook|교과서;notebook|공책;dictionary|사전;pencil|연필;eraser|지우개;ruler|자;scissors|가위;glue|풀;chalk|분필;blackboard|칠판;desk|책상;chair|의자;locker|사물함;backpack|책가방;uniform|교복, 유니폼;playground|운동장;gym|체육관;library|도서관;cafeteria|구내식당;hallway|복도;principal|교장;vacation|방학, 휴가;semester|학기;graduation|졸업;diploma|졸업장;scholarship|장학금;education|교육;knowledge|지식;wisdom|지혜;skill|기술, 솜씨;talent|재능;ability|능력;effort|노력;practice|연습, 연습하다;review|복습, 검토;presentation|발표;report|보고서;project|과제, 프로젝트;club|동아리;activity|활동;contest|대회;prize|상;award|상, 수여하다;medal|메달;trophy|트로피;score|점수;result|결과;level|수준, 단계;beginner|초보자;body|몸;head|머리;face|얼굴;eye|눈;ear|귀;nose|코;mouth|입;lip|입술;tooth|이, 치아;tongue|혀;hair|머리카락;neck|목;shoulder|어깨;arm|팔;elbow|팔꿈치;wrist|손목;hand|손;finger|손가락;thumb|엄지손가락;nail|손톱, 못;chest|가슴;stomach|배, 위;back|등, 뒤;waist|허리;leg|다리;knee|무릎;ankle|발목;foot|발;toe|발가락;heel|발뒤꿈치;skin|피부;bone|뼈;muscle|근육;brain|뇌;heart|심장, 마음;blood|피;breath|숨;voice|목소리;health|건강;disease|질병;illness|병;cold|감기, 추운;fever|열;cough|기침;headache|두통;toothache|치통;stomachache|복통;pain|고통;wound|상처;injury|부상;medicine|약;pill|알약;bandage|붕대;hospital|병원;clinic|진료소;ambulance|구급차;emergency|비상사태;operation|수술, 작동;treatment|치료;recovery|회복;exercise|운동, 운동하다;diet|식단;rest|휴식, 쉬다;sleep|잠, 자다;dream|꿈, 꿈꾸다;energy|에너지, 기운;strength|힘;weight|무게, 체중;height|키, 높이;age|나이;life|삶, 생명;death|죽음;birth|탄생;birthday|생일;anniversary|기념일;wedding|결혼식;funeral|장례식;ceremony|의식;celebration|축하 행사;gift|선물;present|선물, 현재의;card|카드;candle|양초;balloon|풍선;firework|불꽃놀이;festival|축제;holiday|휴일, 명절;event|행사, 사건;parade|퍼레이드;concert|콘서트;performance|공연;audience|관객;stage|무대;ticket|표;seat|좌석, 자리;row|줄, 열;line|줄, 선;queue|줄, 대기 행렬;schedule|일정;plan|계획, 계획하다;date|날짜, 데이트;meeting|회의;conference|회의, 학회;interview|면접, 인터뷰;speech|연설;debate|토론;discussion|토의;conversation|대화;dialogue|대화;message|메시지;letter|편지, 글자;envelope|봉투;stamp|우표, 도장;address|주소;postcard|엽서;package|소포, 꾸러미;parcel|소포;delivery|배달;mail|우편;email|이메일;phone|전화;smartphone|스마트폰;call|전화하다, 부르다;text|문자, 본문;contact|연락, 연락하다;information|정보;news|뉴스, 소식;newspaper|신문;magazine|잡지;article|기사;headline|표제;advertisement|광고;poster|포스터;sign|표지판, 서명하다;symbol|상징;signal|신호;notice|공지, 알아차리다;warning|경고;rule|규칙;law|법;order|순서, 명령, 주문하다;permission|허락;duty|의무;responsibility|책임;right|권리, 옳은, 오른쪽;freedom|자유;peace|평화;war|전쟁;battle|전투;enemy|적;weapon|무기;victory|승리;defeat|패배;go|가다;come|오다;walk|걷다;run|달리다;jump|뛰어오르다;climb|오르다;crawl|기어가다;swim|수영하다;fly|날다;ride|타다;drive|운전하다;travel|여행하다;move|움직이다, 이사하다;stop|멈추다;stand|서다;sit|앉다;lie|눕다, 거짓말하다;fall|떨어지다;rise|오르다, 일어나다;turn|돌다, 차례;push|밀다;pull|당기다;throw|던지다;catch|잡다;hold|잡고 있다;carry|나르다;bring|가져오다;take|가져가다, 잡다;give|주다;get|얻다, 받다;put|놓다;place|놓다, 장소;set|놓다, 설정하다;pick|고르다, 줍다;choose|선택하다;select|선택하다;collect|모으다;gather|모이다, 모으다;find|찾다;search|찾다, 검색하다;seek|찾다, 추구하다;lose|잃다;miss|놓치다, 그리워하다;keep|유지하다, 보관하다;save|구하다, 저장하다;spend|쓰다, 보내다;waste|낭비하다;use|사용하다;need|필요하다;want|원하다;wish|바라다;hope|희망하다;expect|기대하다;wait|기다리다;stay|머무르다;leave|떠나다, 남기다;return|돌아오다;enter|들어가다;exit|나가다, 출구;open|열다;close|닫다;lock|잠그다;shut|닫다;start|시작하다;begin|시작하다;finish|끝내다;end|끝나다, 끝;continue|계속하다;repeat|반복하다;try|시도하다;attempt|시도하다;fail|실패하다;succeed|성공하다;win|이기다;beat|이기다, 때리다;fight|싸우다;argue|말다툼하다;agree|동의하다;disagree|반대하다;accept|받아들이다;refuse|거절하다;reject|거부하다;allow|허락하다;forbid|금지하다;let|~하게 하다;make|만들다;create|창조하다;build|짓다;destroy|파괴하다;break|부수다, 깨다;fix|고치다;mend|수선하다;change|바꾸다, 변화;exchange|교환하다;replace|교체하다;remove|제거하다;add|더하다;join|가입하다, 합치다;connect|연결하다;attach|붙이다;separate|분리하다, 분리된;divide|나누다;share|나누다, 공유하다;cut|자르다;tear|찢다, 눈물;fold|접다;wrap|싸다, 포장하다;cover|덮다, 표지;hide|숨기다;show|보여주다;display|전시하다;appear|나타나다;disappear|사라지다;happen|일어나다;occur|발생하다;exist|존재하다;become|~이 되다;seem|~처럼 보이다;look|보다, ~해 보이다;see|보다;watch|지켜보다;observe|관찰하다;stare|빤히 보다;glance|흘긋 보다;hear|듣다;listen|귀 기울이다;sound|소리, ~하게 들리다;smell|냄새 맡다, 냄새;taste|맛보다, 맛;touch|만지다;feel|느끼다;sense|감각, 느끼다;think|생각하다;consider|고려하다;believe|믿다;trust|신뢰하다;doubt|의심하다;know|알다;realize|깨닫다;recognize|알아보다;remember|기억하다;forget|잊다;remind|상기시키다;learn|배우다;study|공부하다;teach|가르치다;train|훈련하다, 기차;educate|교육하다;memorize|암기하다;focus|집중하다;concentrate|집중하다;imagine|상상하다;guess|추측하다;suppose|가정하다;wonder|궁금해하다;predict|예측하다;compare|비교하다;contrast|대조하다;check|확인하다;confirm|확정하다;prove|증명하다;measure|측정하다;count|세다;calculate|계산하다;estimate|추정하다;say|말하다;tell|말해 주다;speak|말하다;talk|이야기하다;chat|수다 떨다;whisper|속삭이다;shout|소리치다;scream|비명을 지르다;yell|외치다;cry|울다, 외치다;laugh|웃다;smile|미소 짓다;greet|인사하다;welcome|환영하다;introduce|소개하다;mention|언급하다;describe|묘사하다;express|표현하다;announce|발표하다;declare|선언하다;inform|알리다;warn|경고하다;advise|조언하다;ask|묻다, 부탁하다;reply|답장하다;respond|응답하다;demand|요구하다;beg|간청하다;pray|기도하다;thank|감사하다;apologize|사과하다;forgive|용서하다;blame|탓하다;complain|불평하다;praise|칭찬하다;encourage|격려하다;cheer|응원하다;support|지지하다;help|돕다;assist|돕다;serve|봉사하다, 제공하다;protect|보호하다;defend|방어하다;attack|공격하다;harm|해치다;hurt|다치게 하다;damage|손상시키다;kill|죽이다;die|죽다;survive|살아남다;escape|탈출하다;avoid|피하다;prevent|막다;rescue|구조하다;recover|회복하다;heal|치유하다;cure|치료하다;treat|치료하다, 대하다;care|돌보다, 관심;feed|먹이다;raise|기르다, 올리다;grow|자라다, 기르다;plant|심다, 식물;water|물을 주다, 물;pour|붓다;fill|채우다;empty|비우다, 빈;clean|청소하다, 깨끗한;wash|씻다;wipe|닦다;sweep|쓸다;polish|광내다;dry|말리다, 마른;hang|걸다;bake|굽다;boil|끓이다;fry|튀기다;roast|굽다;mix|섞다;stir|젓다;chop|썰다;peel|껍질을 벗기다;slice|얇게 썰다;eat|먹다;drink|마시다;bite|물다;chew|씹다;swallow|삼키다;sip|홀짝이다;buy|사다;sell|팔다;pay|지불하다;cost|비용이 들다;earn|벌다;owe|빚지다;lend|빌려주다;rent|빌리다, 집세;trade|거래하다;shop|쇼핑하다, 가게;deliver|배달하다;receive|받다;send|보내다;pack|짐을 싸다;unpack|짐을 풀다;load|싣다;weigh|무게를 재다;wear|입다;dress|옷을 입다;undress|옷을 벗다;tie|묶다;untie|풀다;button|단추를 잠그다;zip|지퍼를 잠그다;iron|다림질하다;sew|바느질하다;knit|뜨개질하다;shave|면도하다;comb|빗다;brush|솔질하다;work|일하다;labor|노동;hire|고용하다;fire|해고하다, 불;quit|그만두다;retire|은퇴하다;manage|관리하다;operate|작동하다;control|통제하다;handle|다루다;organize|조직하다;arrange|정리하다;produce|생산하다;manufacture|제조하다;invent|발명하다;design|설계하다;draw|그리다;paint|칠하다;sketch|스케치하다;print|인쇄하다;copy|복사하다;record|기록하다, 녹음하다;write|쓰다;type|타자 치다;erase|지우다;underline|밑줄 긋다;mark|표시하다;note|메모하다, 주목하다;list|목록을 만들다;read|읽다;translate|번역하다;interpret|통역하다;spell|철자를 쓰다;pronounce|발음하다;sing|노래하다;dance|춤추다;play|놀다, 연주하다;perform|공연하다;act|연기하다, 행동하다;direct|감독하다;film|촬영하다, 영화;shoot|쏘다, 촬영하다;edit|편집하다;publish|출판하다;broadcast|방송하다;upload|업로드하다;download|다운로드하다;post|게시하다;delete|삭제하다;click|클릭하다;scroll|스크롤하다;log|기록, 접속하다;visit|방문하다;invite|초대하다;attend|참석하다;participate|참여하다;meet|만나다;marry|결혼하다;divorce|이혼하다;celebrate|축하하다;congratulate|축하 인사하다;enjoy|즐기다;relax|쉬다;nap|낮잠 자다;wake|깨다;yawn|하품하다;stretch|기지개를 켜다;jog|조깅하다;hike|하이킹하다;camp|캠핑하다;fish|낚시하다;hunt|사냥하다;explore|탐험하다;adventure|모험;journey|여정;trip|여행;tour|관광;flight|비행, 항공편;voyage|항해;cruise|유람선 여행;luggage|짐;baggage|수하물;suitcase|여행 가방;passport|여권;visa|비자;souvenir|기념품;map|지도;guide|안내자, 안내하다;direction|방향;route|경로;path|길;road|도로;street|거리;avenue|대로;corner|모퉁이;crosswalk|횡단보도;sidewalk|인도;bridge|다리;tunnel|터널;highway|고속도로;traffic|교통;vehicle|차량;car|자동차;bus|버스;taxi|택시;truck|트럭;van|승합차;motorcycle|오토바이;bicycle|자전거;subway|지하철;railway|철도;station|역;platform|승강장;airport|공항;airplane|비행기;helicopter|헬리콥터;ship|배;boat|보트;ferry|여객선;harbor|항구;port|항구;wheel|바퀴;engine|엔진;brake|브레이크;horn|경적;seatbelt|안전벨트;license|면허증;fuel|연료;gas|기름, 기체;oil|기름;speed|속도;accident|사고;crash|충돌하다;passenger|승객;fare|요금;fee|수수료;price|가격;discount|할인;sale|판매, 할인;bargain|싼 물건, 흥정;receipt|영수증;bill|계산서, 지폐;cash|현금;coin|동전;wallet|지갑;purse|핸드백;credit|신용;account|계좌;bank|은행;deposit|예금하다;withdraw|인출하다;loan|대출;debt|빚;tax|세금;salary|월급;wage|임금;income|수입;profit|이익;loss|손실;budget|예산;economy|경제;business|사업;company|회사;factory|공장;office|사무실;market|시장;store|가게;mall|쇼핑몰;bakery|빵집;butcher|정육점;pharmacy|약국;bookstore|서점;restaurant|식당;cafe|카페;menu|메뉴;dish|요리, 접시;meal|식사;breakfast|아침 식사;lunch|점심 식사;dinner|저녁 식사;supper|저녁밥;snack|간식;dessert|디저트;appetite|식욕;flavor|맛, 풍미;recipe|조리법;ingredient|재료;grocery|식료품;vegetable|채소;fruit|과일;meat|고기;beef|소고기;pork|돼지고기;chicken|닭고기;seafood|해산물;shrimp|새우;crab|게;egg|달걀;rice|쌀, 밥;noodle|국수;bread|빵;toast|토스트;sandwich|샌드위치;hamburger|햄버거;pizza|피자;soup|수프;salad|샐러드;sauce|소스;salt|소금;sugar|설탕;pepper|후추;spice|향신료;honey|꿀;jam|잼;butter|버터;cheese|치즈;cream|크림;yogurt|요거트;flour|밀가루;vinegar|식초;garlic|마늘;onion|양파;potato|감자;tomato|토마토;carrot|당근;cucumber|오이;cabbage|양배추;pumpkin|호박;mushroom|버섯;bean|콩;corn|옥수수;apple|사과;pear|배;peach|복숭아;grape|포도;strawberry|딸기;watermelon|수박;melon|멜론;banana|바나나;orange|오렌지;lemon|레몬;cherry|체리;plum|자두;kiwi|키위;pineapple|파인애플;mango|망고;coconut|코코넛;nut|견과;peanut|땅콩;walnut|호두;chestnut|밤;good|좋은;bad|나쁜;great|훌륭한;terrible|끔찍한;wonderful|멋진;awful|지독한;excellent|뛰어난;perfect|완벽한;poor|가난한, 형편없는;rich|부유한;wealthy|부유한;big|큰;small|작은;large|커다란;tiny|아주 작은;huge|거대한;giant|거대한, 거인;enormous|막대한;little|작은, 어린;long|긴;short|짧은, 키 작은;tall|키 큰;high|높은;low|낮은;deep|깊은;shallow|얕은;wide|넓은;narrow|좁은;broad|폭넓은;thick|두꺼운;thin|얇은, 마른;fat|뚱뚱한;slim|날씬한;heavy|무거운;light|가벼운, 빛;fast|빠른;quick|재빠른;rapid|급속한;slow|느린;early|이른;late|늦은;new|새로운;old|오래된, 늙은;young|어린, 젊은;fresh|신선한;modern|현대의;ancient|고대의;recent|최근의;hot|뜨거운;warm|따뜻한;cool|시원한;freezing|꽁꽁 어는;mild|온화한;wet|젖은;humid|습한;sunny|화창한;cloudy|흐린;rainy|비 오는;snowy|눈 오는;windy|바람 부는;stormy|폭풍우 치는;foggy|안개 낀;bright|밝은;dark|어두운;clear|맑은, 분명한;dim|어둑한;shiny|빛나는;colorful|다채로운;dirty|더러운;neat|단정한;messy|지저분한;tidy|정돈된;beautiful|아름다운;pretty|예쁜;handsome|잘생긴;cute|귀여운;lovely|사랑스러운;ugly|못생긴;plain|수수한, 평범한;attractive|매력적인;charming|매력 있는;easy|쉬운;difficult|어려운;hard|어려운, 단단한;simple|간단한;complex|복잡한;complicated|복잡한;soft|부드러운;smooth|매끄러운;rough|거친;sharp|날카로운;dull|무딘, 따분한;flat|평평한;round|둥근;square|네모난, 광장;straight|곧은;curved|굽은;crooked|비뚤어진;loud|시끄러운;noisy|소란한;quiet|조용한;silent|침묵의;calm|차분한;peaceful|평화로운;busy|바쁜;free|자유로운, 무료의;full|가득 찬;closed|닫힌;safe|안전한;dangerous|위험한;risky|위험한;careful|조심하는;careless|부주의한;brave|용감한;bold|대담한;coward|겁쟁이;shy|수줍은;timid|소심한;humble|겸손한;modest|겸손한;polite|예의 바른;rude|무례한;kind|친절한;friendly|다정한;gentle|온화한;mean|못된, 의미하다;cruel|잔인한;selfish|이기적인;generous|관대한;honest|정직한;dishonest|부정직한;fair|공정한;unfair|불공평한;loyal|충실한;faithful|충직한;wise|현명한;clever|영리한;smart|똑똑한;foolish|어리석은;silly|바보 같은;stupid|멍청한;funny|웃긴;humorous|유머러스한;serious|진지한;strict|엄격한;diligent|부지런한;lazy|게으른;active|활동적인;passive|수동적인;energetic|활기찬;tired|피곤한;exhausted|기진맥진한;sleepy|졸린;hungry|배고픈;thirsty|목마른;sick|아픈;healthy|건강한;strong|강한;weak|약한;fit|건강한, 맞다;happy|행복한;glad|기쁜;joyful|즐거운;cheerful|쾌활한;pleased|만족한;delighted|아주 기쁜;sad|슬픈;unhappy|불행한;upset|속상한;depressed|우울한;gloomy|침울한;angry|화난;mad|몹시 화난;furious|격노한;annoyed|짜증 난;irritated|성가신;scared|겁먹은;afraid|두려운;frightened|무서워하는;terrified|공포에 질린;surprised|놀란;amazed|깜짝 놀란;shocked|충격받은;astonished|경악한;curious|호기심 많은;interested|흥미 있는;interesting|흥미로운;boring|지루한;bored|지루해하는;exciting|신나는;thrilling|짜릿한;amazing|놀라운;fantastic|환상적인;strange|이상한;weird|기묘한;odd|이상한, 홀수의;unusual|특이한;common|흔한;ordinary|평범한;normal|정상의;special|특별한;unique|독특한;rare|드문;familiar|익숙한;unfamiliar|낯선;famous|유명한;popular|인기 있는;unknown|알려지지 않은;important|중요한;necessary|필요한;useful|유용한;useless|쓸모없는;helpful|도움이 되는;harmful|해로운;possible|가능한;impossible|불가능한;probable|있을 법한;certain|확실한;sure|확신하는;true|진실한;false|거짓의;real|진짜의;fake|가짜의;wrong|틀린;correct|정확한;exact|정확한;accurate|정밀한;similar|비슷한;different|다른;same|같은;equal|동등한;opposite|반대의;main|주요한;major|주요한;minor|사소한;basic|기본의;general|일반적인;particular|특정한;whole|전체의;entire|전체의;total|전체의;half|절반;quarter|4분의 1;double|두 배의;single|단 하나의;several|몇몇의;many|많은;much|많은;few|거의 없는;enough|충분한;extra|추가의;spare|여분의;cheap|싼;expensive|비싼;valuable|귀중한;precious|소중한;worth|가치 있는;quickly|빨리;slowly|천천히;carefully|조심스럽게;suddenly|갑자기;finally|마침내;eventually|결국;immediately|즉시;recently|최근에;already|이미;still|여전히;yet|아직;soon|곧;later|나중에;always|항상;usually|보통;often|자주;sometimes|가끔;seldom|좀처럼 ~않는;rarely|드물게;never|결코 ~않다;again|다시;once|한 번;twice|두 번;almost|거의;nearly|거의;hardly|거의 ~않다;quite|꽤;very|매우;really|정말;too|너무, ~도;also|또한;together|함께;alone|혼자;abroad|해외로;forward|앞으로;backward|뒤로;upstairs|위층으로;downstairs|아래층으로;everywhere|어디에나;somewhere|어딘가에;nowhere|아무 데도;anywhere|어디든;nature|자연;environment|환경;earth|지구, 땅;world|세계;planet|행성;moon|달;sun|태양;star|별;sky|하늘;cloud|구름;rainbow|무지개;lightning|번개;thunder|천둥;storm|폭풍;typhoon|태풍;hurricane|허리케인;earthquake|지진;flood|홍수;drought|가뭄;disaster|재난;volcano|화산;mountain|산;hill|언덕;valley|계곡;cliff|절벽;cave|동굴;rock|바위;stone|돌;sand|모래;soil|흙;mud|진흙;dust|먼지;desert|사막;forest|숲;jungle|밀림;wood|나무, 숲;tree|나무;branch|나뭇가지;trunk|나무줄기;root|뿌리;leaf|잎;flower|꽃;blossom|꽃, 개화하다;seed|씨앗;grass|풀;bush|덤불;weed|잡초;rose|장미;sunflower|해바라기;tulip|튤립;lily|백합;field|들판;farm|농장;crop|농작물;harvest|수확;grain|곡물;wheat|밀;barley|보리;river|강;stream|시내;lake|호수;pond|연못;waterfall|폭포;ocean|대양;sea|바다;wave|파도;tide|조수;beach|해변;coast|해안;shore|물가;island|섬;peninsula|반도;continent|대륙;pole|극, 막대기;ice|얼음;snow|눈;frost|서리;glacier|빙하;weather|날씨;climate|기후;temperature|온도;season|계절;spring|봄;summer|여름;autumn|가을;winter|겨울;animal|동물;pet|반려동물;dog|개;puppy|강아지;cat|고양이;kitten|새끼 고양이;rabbit|토끼;hamster|햄스터;mouse|쥐;rat|쥐;squirrel|다람쥐;horse|말;cow|소;pig|돼지;sheep|양;goat|염소;deer|사슴;fox|여우;wolf|늑대;bear|곰;lion|사자;tiger|호랑이;elephant|코끼리;giraffe|기린;zebra|얼룩말;monkey|원숭이;gorilla|고릴라;camel|낙타;kangaroo|캥거루;panda|판다;whale|고래;dolphin|돌고래;shark|상어;octopus|문어;turtle|거북이;frog|개구리;snake|뱀;lizard|도마뱀;crocodile|악어;dinosaur|공룡;bird|새;eagle|독수리;hawk|매;owl|올빼미;crow|까마귀;sparrow|참새;pigeon|비둘기;swan|백조;duck|오리;goose|거위;hen|암탉;rooster|수탉;penguin|펭귄;parrot|앵무새;peacock|공작;feather|깃털;wing|날개;beak|부리;nest|둥지;insect|곤충;bug|벌레;ant|개미;bee|벌;butterfly|나비;dragonfly|잠자리;beetle|딱정벌레;ladybug|무당벌레;grasshopper|메뚜기;mosquito|모기;spider|거미;worm|지렁이;snail|달팽이;tail|꼬리;fur|털;paw|동물의 발;claw|발톱;shell|껍데기;cage|새장, 우리;zoo|동물원;aquarium|수족관;house|집;home|집, 가정;apartment|아파트;building|건물;tower|탑;castle|성;palace|궁전;hut|오두막;cottage|시골집;roof|지붕;ceiling|천장;floor|바닥, 층;wall|벽;window|창문;door|문;gate|대문;fence|울타리;yard|마당;garden|정원;garage|차고;basement|지하실;attic|다락방;stairs|계단;elevator|엘리베이터;escalator|에스컬레이터;room|방;bedroom|침실;bathroom|욕실;kitchen|부엌;living|거실의, 살아 있는;dining|식사의;furniture|가구;bed|침대;pillow|베개;blanket|담요;sheet|시트, 한 장;mattress|매트리스;closet|옷장;drawer|서랍;shelf|선반;bookcase|책장;sofa|소파;couch|긴 의자;table|탁자;lamp|램프;mirror|거울;curtain|커튼;carpet|카펫;rug|깔개;clock|시계;fan|선풍기, 팬;heater|난방기;refrigerator|냉장고;freezer|냉동고;oven|오븐;microwave|전자레인지;stove|가스레인지;sink|싱크대;faucet|수도꼭지;toilet|변기, 화장실;shower|샤워;bathtub|욕조;towel|수건;soap|비누;shampoo|샴푸;toothbrush|칫솔;toothpaste|치약;broom|빗자루;mop|대걸레;bucket|양동이;trash|쓰레기;garbage|쓰레기;bin|통;laundry|세탁물;detergent|세제;hanger|옷걸이;vacuum|진공, 청소기;tool|도구;hammer|망치;screw|나사;screwdriver|드라이버;wrench|렌치;drill|드릴;saw|톱;ladder|사다리;rope|밧줄;chain|사슬;wire|철사, 전선;tape|테이프;battery|건전지;bulb|전구;switch|스위치;plug|플러그;outlet|콘센트;flashlight|손전등;match|성냥, 경기;clothes|옷;clothing|의류;shirt|셔츠;blouse|블라우스;sweater|스웨터;jacket|재킷;coat|코트;vest|조끼;suit|정장;pants|바지;jeans|청바지;shorts|반바지;skirt|치마;sock|양말;stocking|스타킹;shoe|신발;sneaker|운동화;boot|부츠;sandal|샌들;slipper|슬리퍼;hat|모자;cap|야구 모자;scarf|목도리;glove|장갑;belt|허리띠;ribbon|리본;pocket|주머니;zipper|지퍼;sleeve|소매;collar|옷깃;fashion|패션;style|스타일;trend|유행;jewel|보석;ring|반지;necklace|목걸이;bracelet|팔찌;earring|귀걸이;glasses|안경;sunglasses|선글라스;umbrella|우산;time|시간;moment|순간;instant|즉시, 순간;period|기간;era|시대;century|세기;decade|10년;year|해, 년;month|달, 월;week|주;weekend|주말;weekday|평일;day|날, 하루;night|밤;midnight|자정;noon|정오;morning|아침;afternoon|오후;evening|저녁;dawn|새벽;dusk|황혼;today|오늘;tomorrow|내일;yesterday|어제;hour|시간;minute|분;second|초, 두 번째;calendar|달력;past|과거;future|미래;memory|기억;forever|영원히;number|숫자;zero|영;hundred|백;thousand|천;million|백만;billion|십억;dozen|12개;pair|한 쌍;amount|양;quantity|수량;quality|품질;size|크기;shape|모양;form|형태;figure|수치, 인물;circle|원;triangle|삼각형;rectangle|직사각형;cube|정육면체;angle|각도;degree|정도, 도;percent|퍼센트;average|평균;maximum|최대;minimum|최소;distance|거리;length|길이;width|너비;depth|깊이;area|면적, 지역;space|공간, 우주;gap|틈;edge|가장자리;center|중심;middle|가운데;top|꼭대기;bottom|바닥;side|옆, 측면;front|앞;rear|뒤쪽;surface|표면;inside|안쪽;outside|바깥쪽;position|위치;location|장소;spot|지점;site|장소, 부지;region|지역;zone|구역;district|지구;border|국경, 경계;boundary|경계;country|나라;nation|국가;state|주, 국가, 상태;city|도시;town|마을;village|마을;capital|수도, 대문자;downtown|시내;suburb|교외;countryside|시골;society|사회;community|공동체;public|대중, 공공의;private|사적인;citizen|시민;population|인구;culture|문화;custom|관습;tradition|전통;habit|습관;manner|예의, 방식;behavior|행동;attitude|태도;personality|성격;character|성격, 등장인물;emotion|감정;feeling|느낌;mood|기분;spirit|정신, 영혼;soul|영혼;mind|마음, 정신;thought|생각;idea|아이디어;opinion|의견;view|견해, 전망;belief|믿음;faith|신앙;religion|종교;god|신;heaven|천국;angel|천사;ghost|유령;monster|괴물;fairy|요정;dragon|용;magic|마법;mystery|수수께끼;miracle|기적;luck|운;fortune|행운, 재산;fate|운명;chance|기회, 가능성;risk|위험;danger|위험;trouble|곤란;crisis|위기;challenge|도전;goal|목표;purpose|목적;aim|목표;target|표적;reason|이유;cause|원인;effect|효과, 영향;consequence|결과;influence|영향;impact|충격, 영향;benefit|이익;advantage|장점;disadvantage|단점;weakness|약점;success|성공;failure|실패;mistake|실수;error|오류;fault|잘못;secret|비밀;truth|진실;fact|사실;fiction|허구, 소설;story|이야기;tale|이야기;novel|소설;poem|시;essay|수필;drama|연극, 드라마;comedy|희극;tragedy|비극;scene|장면;plot|줄거리;theme|주제;title|제목;author|저자;villain|악당;movie|영화;cartoon|만화;animation|애니메이션;comic|만화책;game|게임;toy|장난감;doll|인형;puzzle|퍼즐;chess|체스;dice|주사위;hobby|취미;interest|관심, 흥미;leisure|여가;entertainment|오락;fun|재미;pleasure|기쁨;joy|기쁨;happiness|행복;sadness|슬픔;sorrow|슬픔;grief|비탄;anger|분노;fear|두려움;worry|걱정;stress|스트레스;anxiety|불안;courage|용기;confidence|자신감;pride|자부심;shame|수치심;guilt|죄책감;jealousy|질투;envy|부러움;sympathy|동정;mercy|자비;kindness|친절;honesty|정직;patience|인내;passion|열정;desire|욕망;greed|탐욕;sport|스포츠;soccer|축구;football|축구, 미식축구;baseball|야구;basketball|농구;volleyball|배구;tennis|테니스;badminton|배드민턴;golf|골프;hockey|하키;boxing|복싱;wrestling|레슬링;marathon|마라톤;race|경주;relay|릴레이, 계주;team|팀;rival|경쟁자;opponent|상대;referee|심판;foul|반칙;penalty|벌칙;ball|공;bat|방망이, 박쥐;racket|라켓;net|그물;court|코트, 법정;stadium|경기장;track|트랙, 길;pool|수영장;computer|컴퓨터;laptop|노트북;tablet|태블릿;keyboard|키보드;screen|화면;monitor|모니터;printer|프린터;camera|카메라;video|영상;photo|사진;image|이미지;file|파일;folder|폴더;data|데이터;program|프로그램;software|소프트웨어;hardware|하드웨어;system|시스템;network|네트워크;internet|인터넷;website|웹사이트;online|온라인의;offline|오프라인의;password|비밀번호;machine|기계;robot|로봇;device|장치;gadget|기기;invention|발명품;technology|기술;experiment|실험;laboratory|실험실;research|연구;theory|이론;method|방법;process|과정;step|단계, 걸음;material|재료;metal|금속;gold|금;silver|은;copper|구리;steel|강철;plastic|플라스틱;glass|유리;paper|종이;cloth|천;leather|가죽;rubber|고무;cotton|면;silk|비단;wool|양모;diamond|다이아몬드;treasure|보물;power|힘, 전력;electricity|전기;solar|태양의;nuclear|원자력의;pollution|오염;recycle|재활용하다;resource|자원;smoke|연기;flame|불꽃;heat|열;steam|증기;shadow|그림자;reflection|반사, 반영;echo|메아리;silence|침묵;noise|소음;rhythm|리듬;melody|멜로디;tune|곡조;instrument|악기;piano|피아노;guitar|기타;violin|바이올린;drum|드럼;flute|플루트;trumpet|트럼펫;orchestra|관현악단;band|밴드;choir|합창단;government|정부;politics|정치";
+const LIB_WORDS = WORD_LIB.split(";").map((s) => {
+  const i = s.indexOf("|");
+  return { en: s.slice(0, i), ko: s.slice(i + 1) };
+});
+const DAYS = [];
+for (let i = 0; i < LIB_WORDS.length; i += 20) DAYS.push(LIB_WORDS.slice(i, i + 20));
+const QUIZ_POOL = [...ALL_WORDS, ...LIB_WORDS];
+const TOTAL_WORDS = TOTAL_WORDS_SPECIAL + LIB_WORDS.length;
 
 const LEVELS = [
   { min: 0, title: "견습 정비사" },
-  { min: 100, title: "정비사" },
-  { min: 300, title: "숙련 정비사" },
-  { min: 600, title: "수석 엔지니어" },
-  { min: 1000, title: "에프스타인 재단 연구원" },
+  { min: 300, title: "정비사" },
+  { min: 1200, title: "숙련 정비사" },
+  { min: 3500, title: "수석 엔지니어" },
+  { min: 8000, title: "에프스타인 재단 연구원" },
 ];
 
 const GREETINGS = [
@@ -367,37 +379,132 @@ function SetPicker({ title, learned, onPick, allowAll }) {
   );
 }
 
+/* ───────── 모드 탭 (특제 32 / 중학 1800) ───────── */
+function ModeTabs({ mode, setMode }) {
+  const tabs = [
+    { id: "lib", label: "중학 1800" },
+    { id: "special", label: "특제 부품 32" },
+  ];
+  return (
+    <div className="grid grid-cols-2 gap-2 mb-1">
+      {tabs.map((t) => (
+        <button key={t.id} onClick={() => setMode(t.id)}
+          className="rounded-xl py-2 font-bold press text-sm"
+          style={{
+            background: mode === t.id ? C.pink : C.card,
+            border: "2px solid " + (mode === t.id ? C.pinkDeep : C.copperSoft),
+            color: mode === t.id ? "#fff" : C.inkSoft,
+          }}>
+          {t.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function LibDayGrid({ learned, onPick }) {
+  return (
+    <div>
+      <p className="text-sm mb-3" style={{ color: C.inkSoft }}>
+        하루 20개씩 90일 코스예요. 오늘은 Day 하나만 끝내도 충분해요!
+      </p>
+      <div className="grid grid-cols-4 gap-2">
+        {DAYS.map((day, i) => {
+          const done = day.filter((w) => learned[w.en]).length;
+          const full = done === day.length;
+          return (
+            <button key={i} onClick={() => onPick(i)} className="rounded-xl py-2 px-1 press text-center"
+              style={{ background: full ? C.tealSoft : C.card, border: "2px solid " + (full ? C.teal : C.copperSoft) }}>
+              <span className="block text-xs font-bold" style={{ color: full ? C.teal : C.ink }}>Day {i + 1}</span>
+              <span className="block text-xs" style={{ color: full ? C.teal : C.inkSoft }}>{done}/{day.length}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 /* ───────── 단어 카드 ───────── */
 function CardsScreen({ learned, markLearned }) {
+  const [mode, setMode] = useState("lib");
   const [setId, setSetId] = useState(null);
+  const [dayIdx, setDayIdx] = useState(null);
   const [idx, setIdx] = useState(0);
   const [flip, setFlip] = useState(false);
   const [justGot, setJustGot] = useState(false);
+  const [mnMap, setMnMap] = useState({});
+  const [mnLoading, setMnLoading] = useState(false);
+  const [mnErr, setMnErr] = useState("");
 
-  if (!setId) return <SetPicker title="외울 부품 세트를 골라 주세요. 한 번에 8개, 부담 없어요!" learned={learned} onPick={(id) => { setSetId(id); setIdx(0); setFlip(false); }} />;
+  useEffect(() => {
+    try { const m = localStorage.getItem("tita-mn-v1"); if (m) setMnMap(JSON.parse(m)); } catch (e) {}
+  }, []);
 
-  const set = SETS.find((s) => s.id === setId);
-  const w = set.words[idx];
+  const words = mode === "special"
+    ? (setId ? SETS.find((s) => s.id === setId).words : null)
+    : (dayIdx !== null ? DAYS[dayIdx] : null);
+
+  if (!words) {
+    return (
+      <div className="flex flex-col gap-3">
+        <ModeTabs mode={mode} setMode={(m) => { setMode(m); setSetId(null); setDayIdx(null); }} />
+        {mode === "special" ? (
+          <SetPicker title="연상법이 미리 들어 있는 특제 세트예요." learned={learned}
+            onPick={(id) => { setSetId(id); setIdx(0); setFlip(false); }} />
+        ) : (
+          <LibDayGrid learned={learned} onPick={(i) => { setDayIdx(i); setIdx(0); setFlip(false); }} />
+        )}
+      </div>
+    );
+  }
+
+  const w = words[idx];
   const isLearned = !!learned[w.en];
+  const mn = w.mn || mnMap[w.en] || null;
+  const title = mode === "special" ? SETS.find((s) => s.id === setId).name + " 세트" : "중학 1800 · Day " + (dayIdx + 1);
+  const tint = mode === "special" ? SETS.find((s) => s.id === setId).tint : C.brass;
 
-  const next = () => { setFlip(false); setJustGot(false); setIdx((i) => (i + 1) % set.words.length); };
+  const goBack = () => { setSetId(null); setDayIdx(null); setFlip(false); setIdx(0); setMnErr(""); };
+  const next = () => { setFlip(false); setJustGot(false); setMnErr(""); setIdx((i) => (i + 1) % words.length); };
+
+  const makeMn = async () => {
+    if (mnLoading) return;
+    setMnLoading(true); setMnErr("");
+    try {
+      const res = await fetch("/api/mnemonic", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ word: w.en, meaning: w.ko }),
+      });
+      const d = await res.json();
+      if (d && d.mn) {
+        const nm = { ...mnMap, [w.en]: d.mn };
+        setMnMap(nm);
+        try { localStorage.setItem("tita-mn-v1", JSON.stringify(nm)); } catch (e) {}
+      } else {
+        setMnErr((d && d.error) || "연상법 생성 실패 — 잠시 후 다시 눌러 주세요");
+      }
+    } catch (e) { setMnErr("연결 오류 — 다시 시도해 주세요"); }
+    setMnLoading(false);
+  };
 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
-        <button onClick={() => setSetId(null)} className="p-1 rounded-lg press" style={{ color: C.copper }}><ChevronLeft size={22} /></button>
-        <span className="font-bold" style={{ color: C.ink, fontFamily: "'Jua', sans-serif" }}>{set.name} 세트</span>
-        <span className="ml-auto text-xs" style={{ color: C.inkSoft }}>{idx + 1} / {set.words.length}</span>
+        <button onClick={goBack} className="p-1 rounded-lg press" style={{ color: C.copper }}><ChevronLeft size={22} /></button>
+        <span className="font-bold" style={{ color: C.ink, fontFamily: "'Jua', sans-serif" }}>{title}</span>
+        <span className="ml-auto text-xs" style={{ color: C.inkSoft }}>{idx + 1} / {words.length}</span>
       </div>
 
-      <button onClick={() => setFlip(!flip)} className="text-left w-full press" aria-label="카드 뒤집기">
-        <Panel className="min-h-64 flex flex-col justify-center" style={{ borderColor: set.tint, borderWidth: 2 }}>
+      <div onClick={() => setFlip(!flip)} role="button" className="text-left w-full press cursor-pointer" aria-label="카드 뒤집기">
+        <Panel className="min-h-64 flex flex-col justify-center" style={{ borderColor: tint, borderWidth: 2 }}>
           {!flip ? (
             <div className="text-center py-6 pop">
               <p className="text-xs mb-3 tracking-widest" style={{ color: C.inkSoft }}>NO.{String(idx + 1).padStart(2, "0")} 부품</p>
               <p className="text-4xl font-bold mb-2" style={{ color: C.ink, fontFamily: "'Jua', sans-serif" }}>{w.en}</p>
-              <p className="text-sm mb-4" style={{ color: C.inkSoft }}>[{w.pron}]</p>
-              <span className="inline-flex items-center gap-1 text-xs rounded-full px-3 py-1" style={{ background: C.paper, border: `1px solid ${C.copperSoft}`, color: C.copper }}>
+              {w.pron ? <p className="text-sm mb-4" style={{ color: C.inkSoft }}>[{w.pron}]</p> : <div className="mb-4" />}
+              <span className="inline-flex items-center gap-1 text-xs rounded-full px-3 py-1" style={{ background: C.paper, border: "1px solid " + C.copperSoft, color: C.copper }}>
                 탭해서 뜻 보기
               </span>
             </div>
@@ -406,31 +513,44 @@ function CardsScreen({ learned, markLearned }) {
               <p className="text-2xl font-bold" style={{ color: C.ink, fontFamily: "'Jua', sans-serif" }}>
                 {w.en} <span className="text-base" style={{ color: C.pinkDeep }}>= {w.ko}</span>
               </p>
-              <div className="mt-3 rounded-xl p-3 text-sm leading-relaxed" style={{ background: C.paper, border: `2px dashed ${C.copper}`, color: C.ink }}>
-                <span className="font-bold" style={{ color: C.copper }}>💡 연상법</span><br />{w.mn}
-              </div>
-              <div className="mt-3 text-sm leading-relaxed" style={{ color: C.ink }}>
-                <p className="font-medium">“{w.ex}”</p>
-                <p className="text-xs mt-1" style={{ color: C.inkSoft }}>{w.exKo}</p>
-              </div>
+              {mn ? (
+                <div className="mt-3 rounded-xl p-3 text-sm leading-relaxed" style={{ background: C.paper, border: "2px dashed " + C.copper, color: C.ink }}>
+                  <span className="font-bold" style={{ color: C.copper }}>💡 연상법</span><br />{mn}
+                </div>
+              ) : (
+                <div className="mt-3">
+                  <button onClick={(e) => { e.stopPropagation(); makeMn(); }} disabled={mnLoading}
+                    className="w-full rounded-xl py-2 text-sm font-bold press"
+                    style={{ background: C.pinkSoft, border: "2px dashed " + C.pink, color: C.pinkDeep, opacity: mnLoading ? 0.6 : 1 }}>
+                    {mnLoading ? "티타가 연상법 만드는 중…" : "✨ AI 연상법 만들기"}
+                  </button>
+                  {mnErr ? <p className="text-xs mt-1" style={{ color: C.red }}>{mnErr}</p> : null}
+                </div>
+              )}
+              {w.ex ? (
+                <div className="mt-3 text-sm leading-relaxed" style={{ color: C.ink }}>
+                  <p className="font-medium">“{w.ex}”</p>
+                  <p className="text-xs mt-1" style={{ color: C.inkSoft }}>{w.exKo}</p>
+                </div>
+              ) : null}
             </div>
           )}
         </Panel>
-      </button>
+      </div>
 
       <div className="flex gap-2">
         <button onClick={() => titaSpeak(w.en)} className="rounded-xl px-3 py-3 press" aria-label="발음 듣기"
-          style={{ background: C.card, border: `2px solid ${C.copperSoft}`, color: C.copper }}>
+          style={{ background: C.card, border: "2px solid " + C.copperSoft, color: C.copper }}>
           <Volume2 size={20} />
         </button>
         <button onClick={next} className="flex-1 rounded-xl py-3 font-bold press"
-          style={{ background: C.card, border: `2px solid ${C.copperSoft}`, color: C.inkSoft }}>
+          style={{ background: C.card, border: "2px solid " + C.copperSoft, color: C.inkSoft }}>
           <RotateCcw size={16} className="inline mr-1" /> 다시 볼래요
         </button>
         <button
           onClick={() => { if (!isLearned) { markLearned(w.en); setJustGot(true); } setTimeout(next, isLearned ? 0 : 500); }}
           className="flex-1 rounded-xl py-3 font-bold press"
-          style={{ background: isLearned ? C.tealSoft : C.pink, border: `2px solid ${isLearned ? C.teal : C.pinkDeep}`, color: isLearned ? C.teal : "#fff" }}>
+          style={{ background: isLearned ? C.tealSoft : C.pink, border: "2px solid " + (isLearned ? C.teal : C.pinkDeep), color: isLearned ? C.teal : "#fff" }}>
           {isLearned ? (<><Check size={16} className="inline mr-1" />조립 완료</>) : "외웠어요! +10XP"}
         </button>
       </div>
@@ -445,25 +565,43 @@ function CardsScreen({ learned, markLearned }) {
 
 /* ───────── 퀴즈 ───────── */
 function QuizScreen({ learned, addXp }) {
-  const [phase, setPhase] = useState("pick"); // pick | play | done
+  const [mode, setMode] = useState("lib");
+  const [phase, setPhase] = useState("pick");
   const [qs, setQs] = useState([]);
   const [qi, setQi] = useState(0);
   const [picked, setPicked] = useState(null);
   const [score, setScore] = useState(0);
   const [msg, setMsg] = useState("");
 
-  const start = (setId) => {
-    const pool = setId === "all" ? ALL_WORDS : SETS.find((s) => s.id === setId).words;
+  const startPool = (pool) => {
     const chosen = shuffle(pool).slice(0, 5);
     const built = chosen.map((w) => {
-      const wrong = shuffle(ALL_WORDS.filter((x) => x.en !== w.en)).slice(0, 3).map((x) => x.ko);
+      const wrong = shuffle(QUIZ_POOL.filter((x) => x.en !== w.en && x.ko !== w.ko)).slice(0, 3).map((x) => x.ko);
       return { w, choices: shuffle([w.ko, ...wrong]) };
     });
-    setQs(built); setQi(0); setScore(0); setPicked(null); setPhase("play");
+    setQs(built); setQi(0); setScore(0); setPicked(null); setMsg(""); setPhase("play");
   };
 
-  if (phase === "pick")
-    return <SetPicker title="퀴즈는 딱 5문제! 짧고 굵게 가요." learned={learned} onPick={start} allowAll />;
+  if (phase === "pick") {
+    return (
+      <div className="flex flex-col gap-3">
+        <ModeTabs mode={mode} setMode={setMode} />
+        {mode === "special" ? (
+          <SetPicker title="퀴즈는 딱 5문제! 짧고 굵게 가요." learned={learned}
+            onPick={(id) => startPool(id === "all" ? ALL_WORDS : SETS.find((s) => s.id === id).words)} allowAll />
+        ) : (
+          <>
+            <LibDayGrid learned={learned} onPick={(i) => startPool(DAYS[i])} />
+            <button onClick={() => startPool(LIB_WORDS)}
+              className="rounded-2xl p-4 font-bold press"
+              style={{ background: C.pinkSoft, border: "2px solid " + C.pink, color: C.pinkDeep }}>
+              🔩 1800개 전체 랜덤 퀴즈
+            </button>
+          </>
+        )}
+      </div>
+    );
+  }
 
   if (phase === "done") {
     const great = score >= 4;
@@ -472,11 +610,11 @@ function QuizScreen({ learned, addXp }) {
         <TitaAvatar mood={great ? "happy" : "normal"} size={130} />
         <p className="text-2xl font-bold" style={{ color: C.ink, fontFamily: "'Jua', sans-serif" }}>{score} / 5 정답!</p>
         <Panel className="w-full text-center text-sm" style={{ color: C.ink }}>
-          {great ? "굉장해요! 거의 완벽한 정비예요! 에헤헤 ✨" : score >= 2 ? "좋아요! 틀린 부품은 연상법으로 다시 조이면 돼요!" : "괜찮아요! 단어 카드에서 한 번 더 보고 오면 금방이에요!"}
+          {great ? "굉장해요! 거의 완벽한 정비예요! 에헤헤 ✨" : score >= 2 ? "좋아요! 틀린 부품은 카드에서 다시 조이면 돼요!" : "괜찮아요! 단어 카드에서 한 번 더 보고 오면 금방이에요!"}
           <p className="mt-2 font-bold" style={{ color: C.copper }}>+{score * 10 + 10} XP 획득</p>
         </Panel>
         <button onClick={() => setPhase("pick")} className="w-full rounded-xl py-3 font-bold press"
-          style={{ background: C.pink, border: `2px solid ${C.pinkDeep}`, color: "#fff" }}>
+          style={{ background: C.pink, border: "2px solid " + C.pinkDeep, color: "#fff" }}>
           한 번 더!
         </button>
       </div>
@@ -519,7 +657,7 @@ function QuizScreen({ learned, addXp }) {
           return (
             <button key={c} onClick={() => pick(c)} disabled={answered}
               className="rounded-xl py-3 px-4 text-left font-medium press"
-              style={{ background: bg, border: `2px solid ${bd}`, color: col }}>
+              style={{ background: bg, border: "2px solid " + bd, color: col }}>
               {c}
             </button>
           );
@@ -529,14 +667,19 @@ function QuizScreen({ learned, addXp }) {
         <div className="pop">
           <TitaSays mood={picked === w.ko ? "happy" : "sad"}>
             {msg}
-            {picked !== w.ko && (
-              <span className="block mt-2 text-xs rounded-lg p-2" style={{ background: "#FFF", border: `1px dashed ${C.copper}` }}>
+            {picked !== w.ko && w.mn ? (
+              <span className="block mt-2 text-xs rounded-lg p-2" style={{ background: "#FFF", border: "1px dashed " + C.copper }}>
                 💡 {w.mn}
               </span>
-            )}
+            ) : null}
+            {picked !== w.ko && !w.mn ? (
+              <span className="block mt-2 text-xs" style={{ color: C.inkSoft }}>
+                정답: {w.ko} — 카드에서 ✨AI 연상법을 만들어 보세요!
+              </span>
+            ) : null}
           </TitaSays>
           <button onClick={nextQ} className="mt-3 w-full rounded-xl py-3 font-bold press"
-            style={{ background: C.pink, border: `2px solid ${C.pinkDeep}`, color: "#fff" }}>
+            style={{ background: C.pink, border: "2px solid " + C.pinkDeep, color: "#fff" }}>
             {qi + 1 >= qs.length ? "결과 보기" : "다음 문제"}
           </button>
         </div>
