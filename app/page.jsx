@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
   Home, BookOpen, Brain, MessageCircle, Cog, Heart, Cpu,
-  MessageSquare, Volume2, ChevronLeft, Send, Sparkles, Wrench, Check, RotateCcw
+  MessageSquare, Volume2, ChevronLeft, ChevronRight, Send, Sparkles, Wrench, Check, RotateCcw, Pencil, Undo2, Trash2
 } from "lucide-react";
 
 /* ──────────────────────────────────────────────
@@ -691,6 +691,226 @@ function QuizScreen({ learned, addXp }) {
   );
 }
 
+/* ───────── 필기 연습 패드 (펜·필압 지원, 5줄) ───────── */
+function PracticePad({ word }) {
+  const canvasRef = useRef(null);
+  const wrapRef = useRef(null);
+  const strokesRef = useRef([]); // [{pts:[{x,y,lw}]}] 좌표는 0~1 비율로 저장
+  const curRef = useRef(null);
+  const [penOnly, setPenOnly] = useState(false);
+  const ROWS = 5;
+
+  useEffect(() => {
+    try { if (localStorage.getItem("tita-pen-v1") === "1") setPenOnly(true); } catch (e) {}
+  }, []);
+
+  const drawGuides = (ctx, w, h) => {
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = "#FFFDF8";
+    ctx.fillRect(0, 0, w, h);
+    const rowH = h / ROWS;
+    for (let i = 0; i < ROWS; i++) {
+      const y = rowH * (i + 1) - rowH * 0.2;
+      ctx.strokeStyle = "#E8C9A8";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([6, 6]);
+      ctx.beginPath(); ctx.moveTo(14, y); ctx.lineTo(w - 14, y); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "#C8B49A";
+      ctx.font = "12px sans-serif";
+      ctx.fillText(String(i + 1), 5, y - 4);
+    }
+    // 1행: 따라쓰기 본보기 (연한 글씨)
+    ctx.fillStyle = "rgba(70,49,37,0.16)";
+    ctx.font = '600 ' + Math.min(42, rowH * 0.6) + 'px "Jua", sans-serif';
+    ctx.fillText(word, 28, rowH * 0.7);
+  };
+
+  const redraw = () => {
+    const cv = canvasRef.current; if (!cv) return;
+    const ctx = cv.getContext("2d");
+    const dpr = window.devicePixelRatio || 1;
+    const w = cv.width / dpr, h = cv.height / dpr;
+    drawGuides(ctx, w, h);
+    ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = "#463125";
+    for (const s of strokesRef.current) {
+      for (let i = 1; i < s.pts.length; i++) {
+        const a = s.pts[i - 1], b = s.pts[i];
+        ctx.lineWidth = b.lw;
+        ctx.beginPath(); ctx.moveTo(a.x * w, a.y * h); ctx.lineTo(b.x * w, b.y * h); ctx.stroke();
+      }
+    }
+  };
+
+  const setup = () => {
+    const cv = canvasRef.current, wrap = wrapRef.current;
+    if (!cv || !wrap) return;
+    const dpr = window.devicePixelRatio || 1;
+    const w = wrap.clientWidth;
+    const h = ROWS * 72;
+    cv.width = w * dpr; cv.height = h * dpr;
+    cv.style.width = w + "px"; cv.style.height = h + "px";
+    cv.getContext("2d").setTransform(dpr, 0, 0, dpr, 0, 0);
+    redraw();
+  };
+
+  useEffect(() => {
+    strokesRef.current = []; curRef.current = null;
+    setup();
+    const onR = () => setup();
+    window.addEventListener("resize", onR);
+    return () => window.removeEventListener("resize", onR);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [word]);
+
+  const pos = (e) => {
+    const r = canvasRef.current.getBoundingClientRect();
+    return { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height };
+  };
+  const widthOf = (e) => (e.pointerType === "pen" ? Math.max(1.5, 4.5 * (e.pressure || 0.5)) : 3);
+
+  const down = (e) => {
+    if (penOnly && e.pointerType !== "pen") return;
+    e.preventDefault();
+    try { canvasRef.current.setPointerCapture(e.pointerId); } catch (e2) {}
+    const p = pos(e);
+    curRef.current = { pts: [{ x: p.x, y: p.y, lw: widthOf(e) }] };
+  };
+  const move = (e) => {
+    if (!curRef.current) return;
+    if (penOnly && e.pointerType !== "pen") return;
+    e.preventDefault();
+    const p = pos(e);
+    curRef.current.pts.push({ x: p.x, y: p.y, lw: widthOf(e) });
+    const cv = canvasRef.current; const ctx = cv.getContext("2d");
+    const dpr = window.devicePixelRatio || 1;
+    const w = cv.width / dpr, h = cv.height / dpr;
+    const n = curRef.current.pts.length;
+    if (n >= 2) {
+      const a = curRef.current.pts[n - 2], b = curRef.current.pts[n - 1];
+      ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = "#463125"; ctx.lineWidth = b.lw;
+      ctx.beginPath(); ctx.moveTo(a.x * w, a.y * h); ctx.lineTo(b.x * w, b.y * h); ctx.stroke();
+    }
+  };
+  const up = () => {
+    if (!curRef.current) return;
+    if (curRef.current.pts.length > 1) strokesRef.current.push(curRef.current);
+    curRef.current = null;
+  };
+
+  const undo = () => { strokesRef.current.pop(); redraw(); };
+  const clearAll = () => { strokesRef.current = []; redraw(); };
+  const togglePen = (v) => { setPenOnly(v); try { localStorage.setItem("tita-pen-v1", v ? "1" : "0"); } catch (e) {} };
+
+  return (
+    <div ref={wrapRef} className="w-full">
+      <canvas
+        ref={canvasRef}
+        onPointerDown={down}
+        onPointerMove={move}
+        onPointerUp={up}
+        onPointerCancel={up}
+        onContextMenu={(e) => e.preventDefault()}
+        className="rounded-2xl w-full"
+        style={{ touchAction: "none", border: "2px solid " + C.copperSoft, background: C.card, display: "block", boxShadow: "0 2px 0 rgba(70,49,37,0.08)" }}
+      />
+      <div className="flex items-center gap-2 mt-2">
+        <button onClick={undo} className="rounded-xl px-3 py-2 text-xs font-bold press inline-flex items-center gap-1"
+          style={{ background: C.card, border: "2px solid " + C.copperSoft, color: C.inkSoft }}>
+          <Undo2 size={14} /> 한 획 취소
+        </button>
+        <button onClick={clearAll} className="rounded-xl px-3 py-2 text-xs font-bold press inline-flex items-center gap-1"
+          style={{ background: C.card, border: "2px solid " + C.copperSoft, color: C.inkSoft }}>
+          <Trash2 size={14} /> 지우기
+        </button>
+        <label className="ml-auto flex items-center gap-1 text-xs font-bold" style={{ color: C.ink }}>
+          <input type="checkbox" checked={penOnly} onChange={(e) => togglePen(e.target.checked)} />
+          ✍️ 펜만 (손바닥 무시)
+        </label>
+      </div>
+    </div>
+  );
+}
+
+/* ───────── 필기 노트 (단어 5번 쓰기) ───────── */
+function WritingScreen({ learned, markLearned }) {
+  const [mode, setMode] = useState("lib");
+  const [setId, setSetId] = useState(null);
+  const [dayIdx, setDayIdx] = useState(null);
+  const [idx, setIdx] = useState(0);
+  const [justGot, setJustGot] = useState(false);
+
+  const words = mode === "special"
+    ? (setId ? SETS.find((s) => s.id === setId).words : null)
+    : (dayIdx !== null ? DAYS[dayIdx] : null);
+
+  if (!words) {
+    return (
+      <div className="flex flex-col gap-3">
+        <p className="text-xs rounded-lg py-2 px-3" style={{ background: C.paper, border: "1px dashed " + C.copperSoft, color: C.inkSoft }}>
+          ✍️ 태블릿 + 펜으로 단어를 5번씩 따라 쓰는 연습장이에요. 1행의 연한 글씨를 따라 쓰고, 나머지 줄은 혼자 써 보세요. 손이 기억해 줘요!
+        </p>
+        <ModeTabs mode={mode} setMode={(m) => { setMode(m); setSetId(null); setDayIdx(null); }} />
+        {mode === "special" ? (
+          <SetPicker title="필기로 외울 특제 세트를 골라 주세요." learned={learned}
+            onPick={(id) => { setSetId(id); setIdx(0); setJustGot(false); }} />
+        ) : (
+          <LibDayGrid learned={learned} onPick={(i) => { setDayIdx(i); setIdx(0); setJustGot(false); }} />
+        )}
+      </div>
+    );
+  }
+
+  const w = words[idx];
+  const isLearned = !!learned[w.en];
+  const title = mode === "special" ? SETS.find((s) => s.id === setId).name + " 세트" : "중학 1800 · Day " + (dayIdx + 1);
+  const goBack = () => { setSetId(null); setDayIdx(null); setIdx(0); setJustGot(false); };
+  const go = (d) => { setJustGot(false); setIdx((i) => (i + d + words.length) % words.length); };
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-2">
+        <button onClick={goBack} className="p-1 rounded-lg press" style={{ color: C.copper }}><ChevronLeft size={22} /></button>
+        <span className="font-bold" style={{ color: C.ink, fontFamily: "'Jua', sans-serif" }}>{title}</span>
+        <span className="ml-auto text-xs" style={{ color: C.inkSoft }}>{idx + 1} / {words.length}</span>
+      </div>
+
+      <Panel className="text-center py-3">
+        <p className="text-3xl font-bold" style={{ color: C.ink, fontFamily: "'Jua', sans-serif" }}>
+          {w.en} <span className="text-base" style={{ color: C.pinkDeep }}>= {w.ko}</span>
+        </p>
+        <button onClick={() => titaSpeak(w.en)} className="mt-1 text-xs inline-flex items-center gap-1 press" style={{ color: C.copper }}>
+          <Volume2 size={14} /> 발음 듣기
+        </button>
+      </Panel>
+
+      <PracticePad key={w.en + "-" + idx} word={w.en} />
+
+      <div className="flex gap-2">
+        <button onClick={() => go(-1)} className="rounded-xl px-3 py-3 press" aria-label="이전 단어"
+          style={{ background: C.card, border: "2px solid " + C.copperSoft, color: C.inkSoft }}>
+          <ChevronLeft size={20} />
+        </button>
+        <button
+          onClick={() => { if (!isLearned) { markLearned(w.en); setJustGot(true); setTimeout(() => go(1), 600); } else go(1); }}
+          className="flex-1 rounded-xl py-3 font-bold press"
+          style={{ background: isLearned ? C.tealSoft : C.pink, border: "2px solid " + (isLearned ? C.teal : C.pinkDeep), color: isLearned ? C.teal : "#fff" }}>
+          {isLearned ? (<><Check size={16} className="inline mr-1" />조립 완료</>) : "5번 다 썼어요! +10XP"}
+        </button>
+        <button onClick={() => go(1)} className="rounded-xl px-3 py-3 press" aria-label="다음 단어"
+          style={{ background: C.card, border: "2px solid " + C.copperSoft, color: C.inkSoft }}>
+          <ChevronRight size={20} />
+        </button>
+      </div>
+      {justGot && (
+        <p className="text-center text-sm font-bold pop" style={{ color: C.teal }}>
+          <Sparkles size={14} className="inline mr-1" />손글씨 조립 완료! 티타가 기뻐해요!
+        </p>
+      )}
+    </div>
+  );
+}
+
 /* ───────── 티타와 회화 (AI — /api/chat 중계) ───────── */
 function ChatScreen() {
   const [messages, setMessages] = useState([
@@ -885,7 +1105,7 @@ export default function TitaEnglishWorkshop() {
 
   const learnedCount = Object.keys(learned).length;
   const { cur } = levelInfo(xp);
-  const TITLES = { home: "티타의 영어 정비공방", cards: "단어 카드", quiz: "조립 퀴즈", chat: "티타와 회화" };
+  const TITLES = { home: "티타의 영어 정비공방", cards: "단어 카드", write: "필기 노트", quiz: "조립 퀴즈", chat: "티타와 회화" };
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: C.paper, fontFamily: "'Gowun Dodum', sans-serif" }}>
@@ -921,16 +1141,18 @@ export default function TitaEnglishWorkshop() {
       <main className="flex-1 px-4 py-4 pb-24 w-full max-w-md mx-auto" style={{ minHeight: 0 }}>
         {screen === "home" && <HomeScreen xp={xp} learnedCount={learnedCount} go={setScreen} greeting={greeting} />}
         {screen === "cards" && <CardsScreen learned={learned} markLearned={markLearned} />}
+        {screen === "write" && <WritingScreen learned={learned} markLearned={markLearned} />}
         {screen === "quiz" && <QuizScreen learned={learned} addXp={addXp} />}
         {screen === "chat" && <div style={{ height: "70vh" }}><ChatScreen /></div>}
       </main>
 
       {/* 하단 탭 */}
       <nav className="fixed bottom-0 left-0 right-0 z-10" style={{ background: C.card, borderTop: `2px solid ${C.copperSoft}` }}>
-        <div className="max-w-md mx-auto grid grid-cols-4">
+        <div className="max-w-md mx-auto grid grid-cols-5">
           {[
             { key: "home", Icon: Home, label: "홈" },
             { key: "cards", Icon: BookOpen, label: "단어" },
+            { key: "write", Icon: Pencil, label: "필기" },
             { key: "quiz", Icon: Brain, label: "퀴즈" },
             { key: "chat", Icon: MessageCircle, label: "회화" },
           ].map(({ key, Icon, label }) => {
