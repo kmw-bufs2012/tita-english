@@ -1,13 +1,21 @@
-// AI 연상법 생성 창구 — 단어+뜻을 받아 한국어 발음 연상법 1개를 만들어 줘요.
+// AI 연상법 생성 창구 — 아주 쉽고 짧은 한 줄 연상법을 만들어 줘요.
 export const runtime = "nodejs";
 
-const MN_SYSTEM = `You create Korean sound-association mnemonics (연상법) for English vocabulary. The learner is a Korean adult with ADHD.
+const MN_SYSTEM = `You create super simple Korean mnemonics (연상법) for English words. The learner is a Korean adult with ADHD who prefers very easy language (middle-school level Korean).
 
 Rules:
-- Link the English word's SOUND (한글 발음으로) to its Korean meaning in ONE short, vivid, playful sentence (max 2 short sentences).
-- Write in Korean. Naturally include the rough Korean pronunciation of the word.
-- Make it concrete and visual so it sticks in memory.
-- Respond ONLY with raw JSON, no markdown: {"mn": "연상법 문장"}`;
+- ONE short sentence only. Keep it under about 30 Korean characters.
+- Pattern: 한글 발음 → 쉬운 장면 하나. (소리 먼저, 그다음 그림 하나)
+- Use only easy everyday Korean words. No hard vocabulary. No long explanations. No multi-step logic.
+- Make the sound link obvious and a little funny, so it sticks in memory.
+
+Good examples (follow this style):
+- borrow(빌리다) → "바로 우리집에서 빌려가!"
+- nervous(긴장한) → "너, 버스 놓칠까 봐 긴장했지?"
+- solve(해결하다) → "문제 풀고 '살았다, 브이(V)!'"
+- arrive(도착하다) → "어! 라이브 공연장에 도착!"
+
+Respond ONLY with raw JSON, no markdown: {"mn": "연상법 한 문장"}`;
 
 export async function POST(req) {
   try {
@@ -28,7 +36,7 @@ export async function POST(req) {
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 300,
+        max_tokens: 200,
         system: MN_SYSTEM,
         messages: [{ role: "user", content: "단어: " + word + " / 뜻: " + meaning }],
       }),
