@@ -297,6 +297,14 @@ function TitaSays({ mood, children }) {
 /* ───────── 홈 화면 ───────── */
 function HomeScreen({ xp, learnedCount, go, greeting }) {
   const { cur, next, pct } = levelInfo(xp);
+  const [saved, setSaved] = useState({ quiz: 0, write: 0 });
+  useEffect(() => {
+    try {
+      const q = JSON.parse(localStorage.getItem("tita-quiz-v1") || "{}");
+      const w = JSON.parse(localStorage.getItem("tita-write-v1") || "{}");
+      setSaved({ quiz: q.count || 0, write: Object.keys(w).length });
+    } catch (e) {}
+  }, []);
   return (
     <div className="flex flex-col gap-4">
       <TitaSays mood="happy">
@@ -320,6 +328,13 @@ function HomeScreen({ xp, learnedCount, go, greeting }) {
           <Wrench size={16} style={{ color: C.teal }} />
           조립한 부품(단어): <b>{learnedCount}</b> / {TOTAL_WORDS}개
         </div>
+        <div className="mt-2 flex items-center justify-around text-xs" style={{ color: C.inkSoft }}>
+          <span>🧠 푼 퀴즈 <b style={{ color: C.teal }}>{saved.quiz}</b>회</span>
+          <span>✍️ 필기한 단어 <b style={{ color: C.pinkDeep }}>{saved.write}</b>개</span>
+        </div>
+        <p className="mt-1 text-center" style={{ fontSize: "10px", color: C.inkSoft }}>
+          ✓ 모든 진도는 이 기기에 자동 저장돼요
+        </p>
       </Panel>
 
       <div className="grid gap-3">
@@ -582,6 +597,21 @@ function QuizScreen({ learned, addXp }) {
   const [picked, setPicked] = useState(null);
   const [score, setScore] = useState(0);
   const [msg, setMsg] = useState("");
+  const [wrongList, setWrongList] = useState([]);
+  const [quizStat, setQuizStat] = useState({ count: 0, correct: 0, wrong: {} });
+  useEffect(() => {
+    try { const q = JSON.parse(localStorage.getItem("tita-quiz-v1") || "{}"); setQuizStat({ count: q.count || 0, correct: q.correct || 0, wrong: q.wrong || {} }); } catch (e) {}
+  }, [phase]);
+  const saveQuiz = (finalScore, wrongs) => {
+    try {
+      const q = JSON.parse(localStorage.getItem("tita-quiz-v1") || "{}");
+      q.count = (q.count || 0) + 1;
+      q.correct = (q.correct || 0) + finalScore;
+      q.wrong = q.wrong || {};
+      wrongs.forEach((w) => { q.wrong[w.en] = { ko: w.ko, n: ((q.wrong[w.en] && q.wrong[w.en].n) || 0) + 1 }; });
+      localStorage.setItem("tita-quiz-v1", JSON.stringify(q));
+    } catch (e) {}
+  };
 
   const dayList = mode === "hs" ? DAYS_HS : DAYS;
   const startPool = (pool) => {
@@ -590,12 +620,32 @@ function QuizScreen({ learned, addXp }) {
       const wrong = shuffle(QUIZ_POOL.filter((x) => x.en !== w.en && x.ko !== w.ko)).slice(0, 3).map((x) => x.ko);
       return { w, choices: shuffle([w.ko, ...wrong]) };
     });
-    setQs(built); setQi(0); setScore(0); setPicked(null); setMsg(""); setPhase("play");
+    setQs(built); setQi(0); setScore(0); setPicked(null); setMsg(""); setWrongList([]); setPhase("play");
   };
 
+  const topWrong = Object.entries(quizStat.wrong || {}).sort((a, b) => b[1].n - a[1].n).slice(0, 5);
   if (phase === "pick") {
     return (
       <div className="flex flex-col gap-3">
+        {quizStat.count > 0 && (
+          <Panel className="text-xs" style={{ color: C.ink }}>
+            <p className="font-bold" style={{ color: C.copper, fontFamily: "'Jua', sans-serif" }}>
+              📊 지금까지 푼 퀴즈 {quizStat.count}회 · 맞힌 부품 {quizStat.correct}개
+            </p>
+            {topWrong.length > 0 && (
+              <div className="mt-2">
+                <p className="mb-1" style={{ color: C.inkSoft }}>자주 틀리는 부품 (여기부터 다시 조여요!)</p>
+                <div className="flex flex-wrap gap-1">
+                  {topWrong.map(([en, info]) => (
+                    <span key={en} className="rounded-lg px-2 py-1" style={{ background: C.redSoft, border: "1px solid " + C.red, color: C.red }}>
+                      {en} = {info.ko} <b>×{info.n}</b>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </Panel>
+        )}
         <ModeTabs mode={mode} setMode={setMode} />
         {mode === "special" ? (
           <SetPicker title="퀴즈는 딱 5문제! 짧고 굵게 가요." learned={learned}
@@ -624,6 +674,7 @@ function QuizScreen({ learned, addXp }) {
           {great ? "굉장해요! 거의 완벽한 정비예요! 에헤헤 ✨" : score >= 2 ? "좋아요! 틀린 부품은 카드에서 다시 조이면 돼요!" : "괜찮아요! 단어 카드에서 한 번 더 보고 오면 금방이에요!"}
           <p className="mt-2 font-bold" style={{ color: C.copper }}>+{score * 10 + 10} XP 획득</p>
         </Panel>
+        <p className="text-xs" style={{ color: C.inkSoft }}>📊 지금까지 총 {quizStat.count}회 풀었어요! 틀린 부품은 자동으로 기록돼요.</p>
         <button onClick={() => setPhase("pick")} className="w-full rounded-xl py-3 font-bold press"
           style={{ background: C.pink, border: "2px solid " + C.pinkDeep, color: "#fff" }}>
           한 번 더!
@@ -639,11 +690,11 @@ function QuizScreen({ learned, addXp }) {
     setPicked(c);
     const ok = c === w.ko;
     if (ok) { setScore((s) => s + 1); setMsg(CHEER[Math.floor(Math.random() * CHEER.length)]); }
-    else setMsg(OOPS[Math.floor(Math.random() * OOPS.length)]);
+    else { setMsg(OOPS[Math.floor(Math.random() * OOPS.length)]); setWrongList((prev) => [...prev, w]); }
     if (VOICE_CFG.autoPlay !== false) titaSpeak(ok ? PRAISE_VOICE : ENCOURAGE_VOICE);
   };
   const nextQ = () => {
-    if (qi + 1 >= qs.length) { addXp(score * 10 + 10); setPhase("done"); }
+    if (qi + 1 >= qs.length) { addXp(score * 10 + 10); saveQuiz(score, wrongList); setPhase("done"); }
     else { setQi(qi + 1); setPicked(null); setMsg(""); }
   };
 
@@ -708,6 +759,24 @@ function PracticePad({ word }) {
   const curRef = useRef(null);
   const [penOnly, setPenOnly] = useState(false);
   const ROWS = 5;
+  const WRITE_KEY = "tita-write-v1";
+  const loadStrokes = () => {
+    try {
+      const all = JSON.parse(localStorage.getItem(WRITE_KEY) || "{}");
+      const raw = all[word];
+      if (!raw || !raw.length) return [];
+      return raw.map((st) => ({ pts: st.map((p) => ({ x: p[0], y: p[1], lw: p[2] })) }));
+    } catch (e) { return []; }
+  };
+  const saveStrokes = () => {
+    try {
+      const all = JSON.parse(localStorage.getItem(WRITE_KEY) || "{}");
+      if (!strokesRef.current.length) delete all[word];
+      else all[word] = strokesRef.current.map((st) =>
+        st.pts.map((p) => [Math.round(p.x * 1000) / 1000, Math.round(p.y * 1000) / 1000, Math.round(p.lw * 10) / 10]));
+      localStorage.setItem(WRITE_KEY, JSON.stringify(all));
+    } catch (e) {}
+  };
 
   useEffect(() => {
     try { if (localStorage.getItem("tita-pen-v1") === "1") setPenOnly(true); } catch (e) {}
@@ -764,7 +833,7 @@ function PracticePad({ word }) {
   };
 
   useEffect(() => {
-    strokesRef.current = []; curRef.current = null;
+    strokesRef.current = loadStrokes(); curRef.current = null;
     setup();
     const onR = () => setup();
     window.addEventListener("resize", onR);
@@ -805,10 +874,11 @@ function PracticePad({ word }) {
     if (!curRef.current) return;
     if (curRef.current.pts.length > 1) strokesRef.current.push(curRef.current);
     curRef.current = null;
+    saveStrokes();
   };
 
-  const undo = () => { strokesRef.current.pop(); redraw(); };
-  const clearAll = () => { strokesRef.current = []; redraw(); };
+  const undo = () => { strokesRef.current.pop(); redraw(); saveStrokes(); };
+  const clearAll = () => { strokesRef.current = []; redraw(); saveStrokes(); };
   const togglePen = (v) => { setPenOnly(v); try { localStorage.setItem("tita-pen-v1", v ? "1" : "0"); } catch (e) {} };
 
   return (
