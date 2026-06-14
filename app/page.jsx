@@ -124,11 +124,11 @@ const GREETINGS = [
   "영어도 기계처럼 매일 조금씩 정비하면 반짝반짝해져요!",
   "무리하지 말고, 딱 5분만 해도 충분해요!",
 ];
-const CHEER = ["민우 오빠, 잘 했어요! 완벽한 조립이에요!", "정답! 민우 오빠 대단해요!", "역시 민우 오빠예요! 오브먼트가 반짝!", "굉장해요, 민우 오빠! 한 번에 성공!"];
-const OOPS = ["민우 오빠, 더 잘할 수 있어요! 연상법 다시 볼까요?", "괜찮아요, 민우 오빠! 기계도 시행착오로 완성돼요.", "아깝다! 이 부품은 한 번 더 손보면 돼요!"];
+const CHEER = ["잘 했어요! 완벽한 조립이에요!", "정답! 정말 대단해요!", "역시 멋져요! 오브먼트가 반짝!", "굉장해요! 한 번에 성공!"];
+const OOPS = ["더 잘할 수 있어요! 연상법 다시 볼까요?", "괜찮아요! 기계도 시행착오로 완성돼요.", "아깝다! 이 부품은 한 번 더 손보면 돼요!"];
 // 퀴즈 응원 음성 — 티타 보이스 자동 재생 (같은 두 문장만 써서 캐시되면 요금 거의 0)
-const PRAISE_VOICE = "Minwoo oppa, great job!";
-const ENCOURAGE_VOICE = "Minwoo oppa, you can do better!";
+const PRAISE_VOICE = "Great job! Well done!";
+const ENCOURAGE_VOICE = "It's okay, you can do better!";
 
 const levelInfo = (xp) => {
   let cur = LEVELS[0], next = null;
@@ -994,7 +994,7 @@ function WritingScreen({ learned, markLearned }) {
 /* ───────── 티타와 회화 (AI — /api/chat 중계) ───────── */
 function ChatScreen() {
   const [messages, setMessages] = useState([
-    { role: "assistant", data: { english: "Hello, Minwoo oppa! I'm Tita! Let's practice English together. How are you today?", korean: "안녕하세요, 민우 오빠! 저 티타예요! 같이 영어 연습해요. 오늘 기분 어때요?", tip: null } },
+    { role: "assistant", data: { english: "Hello! I'm Tita! Let's practice English together. By the way, what's your name?", korean: "안녕하세요! 저 티타예요! 같이 영어 연습해요. 그런데, 이름이 뭐예요?", tip: null } },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
