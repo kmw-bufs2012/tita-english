@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
   Home, BookOpen, Brain, MessageCircle, Cog, Heart, Cpu,
-  MessageSquare, Volume2, ChevronLeft, ChevronRight, ChevronDown, Send, Sparkles, Wrench, Check, RotateCcw, Pencil, Undo2, Trash2, GraduationCap, Lightbulb, Target
+  MessageSquare, Volume2, ChevronLeft, ChevronRight, ChevronDown, Send, Sparkles, Wrench, Check, RotateCcw, Pencil, Undo2, Trash2, GraduationCap, Lightbulb, Target, FileText
 } from "lucide-react";
 
 /* ──────────────────────────────────────────────
@@ -1324,6 +1324,7 @@ function HomeScreen({ xp, learnedCount, go, greeting }) {
           { key: "cards", Icon: BookOpen, tint: C.copper, title: "단어 카드", sub: "연상법으로 외우기 · 특제/중학/고등/대학·IT·AI/대학원" },
           { key: "quiz", Icon: Brain, tint: C.teal, title: "조립 퀴즈", sub: "10문제로 빠르게! 즉시 채점" },
           { key: "grammar", Icon: GraduationCap, tint: C.brass, title: "영어 문법", sub: "중학·고등·수능 · 2022 개정 교육과정" },
+          { key: "compose", Icon: FileText, tint: C.teal, title: "작문 연습", sub: "문장 영작·자유 작문 · 티타 AI 채점" },
           { key: "chat", Icon: MessageCircle, tint: C.pinkDeep, title: "티타와 회화", sub: "쉬운 영어로 대화 연습 (AI)" },
         ].map(({ key, Icon, tint, title, sub }) => (
           <button key={key} onClick={() => go(key)}
@@ -1978,6 +1979,218 @@ function WritingScreen({ learned, markLearned }) {
   );
 }
 
+/* ───────── 작문 연습 (AI — /api/write 채점) ───────── */
+const WRITE_PROMPTS = {
+  basic: [
+    "저는 매일 아침 커피를 마셔요.",
+    "그녀는 학교에 버스를 타고 가요.",
+    "우리는 지난 주말에 영화를 봤어요.",
+    "이 책은 정말 재미있어요.",
+    "저는 강아지를 키우고 싶어요.",
+    "오늘 날씨가 아주 좋아요.",
+    "그는 음악 듣는 것을 좋아해요.",
+    "저는 요리를 잘 못해요.",
+    "내일 친구를 만날 거예요.",
+    "이 식당의 음식은 맛있어요.",
+    "저는 보통 11시에 잠을 자요.",
+    "그 영화는 너무 슬펐어요.",
+  ],
+  inter: [
+    "비가 와서 우리는 소풍을 취소했어요.",
+    "열심히 공부하면 시험에 합격할 수 있어요.",
+    "저는 영어를 배운 지 3년이 됐어요.",
+    "그는 회의에 늦어서 사과했어요.",
+    "건강해지려면 규칙적으로 운동해야 해요.",
+    "제가 도착했을 때 그들은 이미 떠났어요.",
+    "이 도시는 해마다 점점 더 붐벼요.",
+    "그녀는 피곤했지만 일을 끝까지 마쳤어요.",
+    "저는 더 좋은 직업을 찾고 있어요.",
+    "우리가 함께 일한다면 더 빨리 끝낼 수 있어요.",
+    "그 소식을 듣고 저는 깜짝 놀랐어요.",
+    "여행을 가기 전에 호텔을 예약해야 해요.",
+  ],
+  exam: [
+    "기술의 발전은 우리의 삶을 크게 바꿔 놓았다.",
+    "많은 사람들이 환경 문제에 관심을 가지기 시작했다.",
+    "교육은 개인의 성장에 중요한 역할을 한다.",
+    "정부는 대중교통을 개선하기 위해 노력하고 있다.",
+    "독서는 사고력을 기르는 데 도움이 된다.",
+    "재택근무에는 장점과 단점이 모두 있다.",
+    "건강한 식습관을 유지하는 것은 생각보다 어렵다.",
+    "소셜 미디어는 사람들의 소통 방식을 바꾸었다.",
+    "성공은 노력뿐 아니라 운에도 달려 있다고들 한다.",
+    "우리는 미래 세대를 위해 자원을 보호해야 한다.",
+    "외국어를 배우면 새로운 기회의 문이 열린다.",
+    "꾸준함이 재능보다 더 중요할 때가 많다.",
+  ],
+};
+const WRITE_TOPICS = [
+  "오늘 하루는 어땠나요? 영어로 적어 보세요.",
+  "가장 좋아하는 음식과 그 이유를 써 보세요.",
+  "주말에 보통 무엇을 하나요?",
+  "가 보고 싶은 여행지를 소개해 보세요.",
+  "당신의 취미에 대해 써 보세요.",
+  "가장 친한 친구를 소개해 보세요.",
+  "최근에 본 영화나 드라마를 소개해 보세요.",
+  "당신의 꿈이나 목표는 무엇인가요?",
+  "어제 저녁에 무엇을 먹었나요?",
+  "영어를 배우는 이유를 써 보세요.",
+  "당신이 사는 동네를 소개해 보세요.",
+  "행복했던 순간 하나를 떠올려 적어 보세요.",
+];
+
+const WRITE_LEVELS = [
+  { id: "basic", label: "기초", tint: C.teal },
+  { id: "inter", label: "중급", tint: C.copper },
+  { id: "exam", label: "실전", tint: C.pinkDeep },
+];
+
+function ComposeScreen({ addXp }) {
+  const [mode, setMode] = useState("sentence"); // sentence | free
+  const [level, setLevel] = useState("basic");
+  const [pIdx, setPIdx] = useState(() => Math.floor(Math.random() * WRITE_PROMPTS.basic.length));
+  const [tIdx, setTIdx] = useState(() => Math.floor(Math.random() * WRITE_TOPICS.length));
+  const [answer, setAnswer] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+
+  const prompt = mode === "free" ? WRITE_TOPICS[tIdx] : WRITE_PROMPTS[level][pIdx];
+
+  const nextPrompt = () => {
+    setAnswer(""); setResult(null);
+    if (mode === "free") {
+      setTIdx((i) => (i + 1 + Math.floor(Math.random() * (WRITE_TOPICS.length - 1))) % WRITE_TOPICS.length);
+    } else {
+      const list = WRITE_PROMPTS[level];
+      setPIdx((i) => (i + 1 + Math.floor(Math.random() * (list.length - 1))) % list.length);
+    }
+  };
+
+  const switchMode = (m) => { setMode(m); setAnswer(""); setResult(null); };
+  const switchLevel = (l) => { setLevel(l); setPIdx(Math.floor(Math.random() * WRITE_PROMPTS[l].length)); setAnswer(""); setResult(null); };
+
+  const submit = async () => {
+    const text = answer.trim();
+    if (!text || loading) return;
+    setLoading(true); setResult(null);
+    try {
+      const res = await fetch("/api/write", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode, prompt, answer: text }),
+      });
+      const data = await res.json();
+      setResult(data);
+      if (data && data.score >= 60 && addXp) addXp(15);
+    } catch (e) {
+      setResult({ model: "", good: "", feedback: "앗, 통신이 잠깐 끊겼어요. 다시 한 번 보내 주세요!", score: 0 });
+    }
+    setLoading(false);
+  };
+
+  const scoreColor = (s) => (s >= 85 ? C.teal : s >= 65 ? C.copper : C.red);
+  const tint = mode === "free" ? C.brass : (WRITE_LEVELS.find((l) => l.id === level) || {}).tint || C.teal;
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-2 gap-2">
+        {[{ id: "sentence", label: "✏️ 문장 영작" }, { id: "free", label: "📝 자유 작문" }].map((t) => (
+          <button key={t.id} onClick={() => switchMode(t.id)}
+            className="rounded-xl py-2 font-bold press text-sm"
+            style={{ background: mode === t.id ? C.pink : C.card, border: "2px solid " + (mode === t.id ? C.pinkDeep : C.copperSoft), color: mode === t.id ? "#fff" : C.inkSoft }}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {mode === "sentence" && (
+        <div className="grid grid-cols-3 gap-2">
+          {WRITE_LEVELS.map((l) => (
+            <button key={l.id} onClick={() => switchLevel(l.id)}
+              className="rounded-xl py-2 font-bold press text-sm"
+              style={{ background: level === l.id ? l.tint : C.card, color: level === l.id ? "#fff" : C.inkSoft, border: "2px solid " + l.tint }}>
+              {l.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <TitaSays mood="happy">
+        {mode === "free" ? "주제에 맞춰 영어로 자유롭게 써 보세요. 짧아도 괜찮아요!" : "아래 한국어 문장을 영어로 바꿔 보세요. 티타가 채점해 줄게요!"}
+      </TitaSays>
+
+      <Panel style={{ borderColor: tint }}>
+        <p className="text-[11px] font-bold mb-1" style={{ color: tint }}>{mode === "free" ? "오늘의 주제" : "작문 과제"}</p>
+        <p className="text-base font-medium leading-relaxed" style={{ color: C.ink }}>{prompt}</p>
+      </Panel>
+
+      <textarea value={answer} onChange={(e) => setAnswer(e.target.value)}
+        rows={mode === "free" ? 5 : 3} placeholder="여기에 영어로 작성하세요…"
+        className="rounded-2xl p-3 text-sm w-full resize-none"
+        style={{ background: C.card, border: "2px solid " + C.copperSoft, color: C.ink, outline: "none" }} />
+
+      <div className="flex gap-2">
+        <button onClick={nextPrompt} disabled={loading}
+          className="rounded-xl py-2 px-4 text-sm font-bold press shrink-0"
+          style={{ background: C.card, border: "2px solid " + C.copperSoft, color: C.inkSoft }}>
+          <RotateCcw size={14} className="inline mr-1" />다른 {mode === "free" ? "주제" : "문장"}
+        </button>
+        <button onClick={submit} disabled={loading || !answer.trim()}
+          className="flex-1 rounded-xl py-2 text-sm font-bold press"
+          style={{ background: answer.trim() && !loading ? C.pinkDeep : C.copperSoft, color: "#fff" }}>
+          {loading ? "티타가 채점 중…" : "제출하기"}
+        </button>
+      </div>
+
+      {result && (
+        <div className="flex flex-col gap-3 pop">
+          {typeof result.score === "number" && (
+            <Panel>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-sm font-bold" style={{ color: C.ink }}>티타의 점수</span>
+                <span className="ml-auto text-lg font-bold" style={{ color: scoreColor(result.score), fontFamily: "'Jua', sans-serif" }}>{result.score}점</span>
+              </div>
+              <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "#EFE2CC" }}>
+                <div className="h-full rounded-full" style={{ width: result.score + "%", background: scoreColor(result.score), transition: "width .5s" }} />
+              </div>
+            </Panel>
+          )}
+
+          {result.model ? (
+            <Panel style={{ borderColor: C.teal }}>
+              <p className="font-bold text-sm mb-1" style={{ color: C.teal }}>💡 {mode === "free" ? "이렇게 다듬어 봐요" : "모범답안"}</p>
+              <div className="flex items-start gap-2">
+                <p className="text-sm font-medium flex-1 leading-relaxed" style={{ color: C.ink }}>{result.model}</p>
+                <button onClick={() => titaSpeak(result.model)} aria-label="발음 듣기"
+                  className="rounded-lg px-2 py-1 press shrink-0" style={{ background: C.card, border: "1px solid " + C.copperSoft, color: C.copper }}>
+                  <Volume2 size={14} />
+                </button>
+              </div>
+            </Panel>
+          ) : null}
+
+          {result.good ? (
+            <div className="rounded-2xl p-3 text-sm" style={{ background: C.tealSoft, border: "2px solid " + C.teal, color: C.ink }}>
+              <b style={{ color: C.teal }}>👍 잘한 점 </b>{result.good}
+            </div>
+          ) : null}
+
+          {result.feedback ? (
+            <div className="rounded-2xl p-3 text-sm" style={{ background: "#FFF", border: "1px dashed " + C.copper, color: C.ink }}>
+              <b style={{ color: C.copper }}>🔧 교정 팁 </b>{result.feedback}
+            </div>
+          ) : null}
+
+          <button onClick={nextPrompt}
+            className="rounded-xl py-2 text-sm font-bold press" style={{ background: tint, color: "#fff" }}>
+            다음 {mode === "free" ? "주제" : "문장"} →
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ───────── 티타와 회화 (AI — /api/chat 중계) ───────── */
 function ChatScreen() {
   const [messages, setMessages] = useState([
@@ -2374,7 +2587,7 @@ export default function TitaEnglishWorkshop() {
 
   const learnedCount = Object.keys(learned).length;
   const { cur } = levelInfo(xp);
-  const TITLES = { home: "티타의 영어 정비공방", cards: "단어 카드", write: "필기 노트", quiz: "조립 퀴즈", grammar: "영어 문법", chat: "티타와 회화" };
+  const TITLES = { home: "티타의 영어 정비공방", cards: "단어 카드", write: "필기 노트", quiz: "조립 퀴즈", grammar: "영어 문법", compose: "작문 연습", chat: "티타와 회화" };
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: C.paper, fontFamily: "'Gowun Dodum', sans-serif" }}>
@@ -2413,18 +2626,20 @@ export default function TitaEnglishWorkshop() {
         {screen === "write" && <WritingScreen learned={learned} markLearned={markLearned} />}
         {screen === "quiz" && <QuizScreen learned={learned} addXp={addXp} />}
         {screen === "grammar" && <GrammarScreen />}
+        {screen === "compose" && <ComposeScreen addXp={addXp} />}
         {screen === "chat" && <div style={{ height: "70vh" }}><ChatScreen /></div>}
       </main>
 
       {/* 하단 탭 */}
       <nav className="fixed bottom-0 left-0 right-0 z-10" style={{ background: C.card, borderTop: `2px solid ${C.copperSoft}` }}>
-        <div className="max-w-md mx-auto grid grid-cols-6">
+        <div className="max-w-md mx-auto grid grid-cols-7">
           {[
             { key: "home", Icon: Home, label: "홈" },
             { key: "cards", Icon: BookOpen, label: "단어" },
             { key: "write", Icon: Pencil, label: "필기" },
             { key: "quiz", Icon: Brain, label: "퀴즈" },
             { key: "grammar", Icon: GraduationCap, label: "문법" },
+            { key: "compose", Icon: FileText, label: "작문" },
             { key: "chat", Icon: MessageCircle, label: "회화" },
           ].map(({ key, Icon, label }) => {
             const active = screen === key;
