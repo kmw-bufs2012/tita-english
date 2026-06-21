@@ -2554,7 +2554,7 @@ function GrammarScreen() {
         ))}
       </div>
       <TitaSays mood="happy">{level.intro}</TitaSays>
-      <p className="text-xs px-1" style={{ color: C.inkSoft }}>총 {topics.length}개 단원 · 2022 개정 교육과정 기준</p>
+      <p className="text-xs px-1" style={{ color: C.inkSoft }}>총 {topics.length}개 단원{!["co", "gr"].includes(lvl) && " · 2022 개정 교육과정 기준"}</p>
       {topics.map((t, i) => (
         <button key={t.id} onClick={() => setTopicId(t.id)}
           className="text-left rounded-2xl p-4 press"
