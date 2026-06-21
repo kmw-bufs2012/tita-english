@@ -2034,6 +2034,23 @@ const FREE_NOUNS = ["오늘 하루","어제 저녁","주말","휴일","방학","
 const FREE_COUNT = FREE_FRAMES.length * FREE_NOUNS.length;
 const genTopic = () => _pick(FREE_FRAMES).replace("{N}", _pick(FREE_NOUNS));
 
+/* IT 비즈니스 실무 작문 — 현업 시나리오 조합형 */
+const BIZ_RCP = ["팀 리더에게","동료에게","해외 협력사에게","고객에게","신규 입사자에게","프로젝트 매니저에게","디자이너에게","QA 담당자에게","상사에게","외주 개발사에게","타 부서 담당자에게","채용 지원자에게","오픈소스 기여자에게","파트너사 담당자에게"];
+const BIZ_SIT = ["회의 일정 변경을(를)","배포 지연을(를)","신규 기능 출시를(를)","버그 수정 완료를(를)","코드 리뷰 요청을(를)","일정 연기를(를)","추가 인력 요청을(를)","장애 발생을(를)","미팅 요청을(를)","진행 상황을(를)","마감 임박을(를)","요구사항 변경을(를)","서버 점검 일정을(를)","결제 오류 발생을(를)","우선순위 조정을(를)","테스트 결과를(를)"];
+const BIZ_TONE = ["","정중하게","간결하게","친근하게","격식을 갖춰","빠르게"];
+const BIZ_FORM = ["영어 이메일을 써 보세요.","영어 Slack 메시지를 써 보세요.","영어 메모를 써 보세요.","영어 공지를 써 보세요."];
+const BIZ_TECH = ["로그인 버그에 대한","API 변경 사항에 대한","새 기능에 대한","성능 개선에 대한","DB 마이그레이션에 대한","보안 패치에 대한","배포 절차에 대한","장애 원인에 대한","코드 리팩터링에 대한","신규 라이브러리 도입에 대한","테스트 결과에 대한","이번 릴리스에 대한"];
+const BIZ_AUD = ["","팀에 공유할","고객에게 전달할","경영진에 보고할","오픈소스 사용자를 위한","리뷰어를 위한"];
+const BIZ_DELIV = ["버그 리포트를 작성해 보세요.","PR 설명을 작성해 보세요.","릴리스 노트를 작성해 보세요.","기술 문서를 작성해 보세요.","회의록을 작성해 보세요.","요약 보고를 작성해 보세요.","변경 로그를 작성해 보세요.","이슈 티켓을 작성해 보세요."];
+const BIZ_STANDALONE = ["매일 스탠드업에서 어제 한 일·오늘 할 일·막힌 점을 영어로 보고해 보세요.","코드 리뷰에서 변경을 제안하는 정중한 코멘트를 영어로 써 보세요.","장애 발생 후 고객에게 보내는 사과 이메일을 영어로 써 보세요.","면접 후 지원자에게 보내는 결과 안내 이메일을 영어로 써 보세요.","원격 근무 중 동료에게 도움을 요청하는 메시지를 영어로 써 보세요.","마감을 연기해야 하는 상황을 상사에게 설명하는 이메일을 영어로 써 보세요.","신규 기능 사용법을 안내하는 영어 공지를 작성해 보세요.","주간 업무 보고를 영어로 작성해 보세요.","회의 일정을 잡기 위한 영어 이메일을 써 보세요.","제품 데모를 요청하는 영어 이메일을 써 보세요.","버그 재현 절차를 영어로 단계별로 설명해 보세요.","API 사용 예시를 영어 문서로 작성해 보세요.","고객 문의에 답변하는 영어 이메일을 써 보세요.","협업 도구에서 작업을 인수인계하는 메시지를 영어로 써 보세요.","릴리스 일정 변경을 팀에 공지하는 영어 메시지를 써 보세요.","온보딩 가이드를 신입에게 보내는 영어 이메일을 써 보세요.","외주 업체에 요구사항을 전달하는 영어 이메일을 써 보세요.","스프린트 회고를 영어로 요약해 보세요.","장애 사후 분석(포스트모템)을 영어로 작성해 보세요.","결제 오류를 보고하는 영어 버그 리포트를 작성해 보세요.","기능 제안서를 영어로 작성해 보세요.","코드 리뷰 피드백에 정중히 답하는 영어 코멘트를 써 보세요.","휴가 일정을 팀에 알리는 영어 메시지를 써 보세요.","채용 공고를 영어로 작성해 보세요.","고객에게 새 요금제를 안내하는 영어 이메일을 써 보세요.","서버 점검 일정을 사용자에게 공지하는 영어 메시지를 써 보세요.","협력사와의 미팅 후 회의록을 영어로 작성해 보세요.","제품 출시를 알리는 영어 보도자료를 작성해 보세요.","동료의 도움에 감사하는 영어 메시지를 써 보세요.","일정 지연에 대해 고객에게 양해를 구하는 영어 이메일을 써 보세요.","기술 면접 일정을 조율하는 영어 이메일을 써 보세요.","오류 수정 완료를 보고하는 영어 메시지를 써 보세요.","새 동료를 팀에 소개하는 영어 메시지를 써 보세요.","프로젝트 진행 상황을 경영진에 보고하는 영어 요약을 작성해 보세요.","사용자 피드백을 팀에 공유하는 영어 메시지를 써 보세요.","데이터 분석 결과를 영어로 요약 보고해 보세요."];
+const BIZ_GEN = [
+  [BIZ_RCP, BIZ_SIT, BIZ_TONE, ["알리는"], BIZ_FORM],
+  [BIZ_TECH, BIZ_AUD, ["영어"], BIZ_DELIV],
+  [BIZ_STANDALONE],
+];
+const BIZ_COUNT = _bankCount(BIZ_GEN);
+const genBiz = () => _genFrom(BIZ_GEN);
+
 const WRITE_LEVELS = [
   { id: "basic", label: "기초", tint: C.teal },
   { id: "inter", label: "중급", tint: C.copper },
@@ -2051,13 +2068,13 @@ function ComposeScreen({ addXp }) {
 
   const nextPrompt = () => {
     setAnswer(""); setResult(null);
-    setPrompt(mode === "free" ? genTopic() : genSentence(level));
+    setPrompt(mode === "free" ? genTopic() : mode === "biz" ? genBiz() : genSentence(level));
   };
 
-  const switchMode = (m) => { setMode(m); setAnswer(""); setResult(null); setPrompt(m === "free" ? genTopic() : genSentence(level)); };
+  const switchMode = (m) => { setMode(m); setAnswer(""); setResult(null); setPrompt(m === "free" ? genTopic() : m === "biz" ? genBiz() : genSentence(level)); };
   const switchLevel = (l) => { setLevel(l); setAnswer(""); setResult(null); setPrompt(genSentence(l)); };
 
-  const caseCount = mode === "free" ? FREE_COUNT : SENT_COUNTS[level];
+  const caseCount = mode === "free" ? FREE_COUNT : mode === "biz" ? BIZ_COUNT : SENT_COUNTS[level];
 
   const submit = async () => {
     const text = answer.trim();
@@ -2079,12 +2096,12 @@ function ComposeScreen({ addXp }) {
   };
 
   const scoreColor = (s) => (s >= 85 ? C.teal : s >= 65 ? C.copper : C.red);
-  const tint = mode === "free" ? C.brass : (WRITE_LEVELS.find((l) => l.id === level) || {}).tint || C.teal;
+  const tint = mode === "free" ? C.brass : mode === "biz" ? C.copper : (WRITE_LEVELS.find((l) => l.id === level) || {}).tint || C.teal;
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="grid grid-cols-2 gap-2">
-        {[{ id: "sentence", label: "✏️ 문장 영작" }, { id: "free", label: "📝 자유 작문" }].map((t) => (
+      <div className="grid grid-cols-3 gap-2">
+        {[{ id: "sentence", label: "✏️ 문장 영작" }, { id: "free", label: "📝 자유 작문" }, { id: "biz", label: "💼 IT 실무" }].map((t) => (
           <button key={t.id} onClick={() => switchMode(t.id)}
             className="rounded-xl py-2 font-bold press text-sm"
             style={{ background: mode === t.id ? C.pink : C.card, border: "2px solid " + (mode === t.id ? C.pinkDeep : C.copperSoft), color: mode === t.id ? "#fff" : C.inkSoft }}>
@@ -2106,18 +2123,18 @@ function ComposeScreen({ addXp }) {
       )}
 
       <TitaSays mood="happy">
-        {mode === "free" ? "주제에 맞춰 영어로 자유롭게 써 보세요. 짧아도 괜찮아요!" : "아래 한국어 문장을 영어로 바꿔 보세요. 티타가 채점해 줄게요!"}
+        {mode === "free" ? "주제에 맞춰 영어로 자유롭게 써 보세요. 짧아도 괜찮아요!" : mode === "biz" ? "실무 상황에 맞는 영어 이메일·메시지·문서를 써 보세요. 티타가 톤과 형식까지 봐 줄게요!" : "아래 한국어 문장을 영어로 바꿔 보세요. 티타가 채점해 줄게요!"}
       </TitaSays>
 
       <p className="text-[11px] px-1" style={{ color: C.inkSoft }}>✨ 경우의 수 {caseCount.toLocaleString()}가지 — 누를 때마다 새 문제가 나와요!</p>
 
       <Panel style={{ borderColor: tint }}>
-        <p className="text-[11px] font-bold mb-1" style={{ color: tint }}>{mode === "free" ? "오늘의 주제" : "작문 과제"}</p>
+        <p className="text-[11px] font-bold mb-1" style={{ color: tint }}>{mode === "free" ? "오늘의 주제" : mode === "biz" ? "실무 과제" : "작문 과제"}</p>
         <p className="text-base font-medium leading-relaxed" style={{ color: C.ink }}>{prompt}</p>
       </Panel>
 
       <textarea value={answer} onChange={(e) => setAnswer(e.target.value)}
-        rows={mode === "free" ? 5 : 3} placeholder="여기에 영어로 작성하세요…"
+        rows={mode === "sentence" ? 3 : 6} placeholder="여기에 영어로 작성하세요…"
         className="rounded-2xl p-3 text-sm w-full resize-none"
         style={{ background: C.card, border: "2px solid " + C.copperSoft, color: C.ink, outline: "none" }} />
 
@@ -2125,7 +2142,7 @@ function ComposeScreen({ addXp }) {
         <button onClick={nextPrompt} disabled={loading}
           className="rounded-xl py-2 px-4 text-sm font-bold press shrink-0"
           style={{ background: C.card, border: "2px solid " + C.copperSoft, color: C.inkSoft }}>
-          <RotateCcw size={14} className="inline mr-1" />다른 {mode === "free" ? "주제" : "문장"}
+          <RotateCcw size={14} className="inline mr-1" />다른 {mode === "free" ? "주제" : mode === "biz" ? "과제" : "문장"}
         </button>
         <button onClick={submit} disabled={loading || !answer.trim()}
           className="flex-1 rounded-xl py-2 text-sm font-bold press"
@@ -2175,7 +2192,7 @@ function ComposeScreen({ addXp }) {
 
           <button onClick={nextPrompt}
             className="rounded-xl py-2 text-sm font-bold press" style={{ background: tint, color: "#fff" }}>
-            다음 {mode === "free" ? "주제" : "문장"} →
+            다음 {mode === "free" ? "주제" : mode === "biz" ? "과제" : "문장"} →
           </button>
         </div>
       )}
