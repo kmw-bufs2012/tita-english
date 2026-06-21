@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
   Home, BookOpen, Brain, MessageCircle, Cog, Heart, Cpu,
-  MessageSquare, Volume2, ChevronLeft, ChevronRight, ChevronDown, Send, Sparkles, Wrench, Check, RotateCcw, Pencil, Undo2, Trash2, GraduationCap, Lightbulb, Target, FileText
+  MessageSquare, Volume2, ChevronLeft, ChevronRight, ChevronDown, Send, Sparkles, Wrench, Check, RotateCcw, Pencil, Undo2, Trash2, GraduationCap, Lightbulb, Target, FileText, LogOut
 } from "lucide-react";
 
 /* ──────────────────────────────────────────────
@@ -2634,6 +2634,16 @@ export default function TitaEnglishWorkshop() {
             style={{ background: C.pinkSoft, border: `1px solid ${C.pink}`, color: C.pinkDeep }}>
             Lv. {cur.title}
           </span>
+          <button
+            onClick={async () => {
+              try { await fetch("/api/auth/logout", { method: "POST" }); } catch (e) {}
+              window.location.href = "/login";
+            }}
+            aria-label="로그아웃"
+            className="p-1.5 rounded-lg press"
+            style={{ background: C.card, border: `1px solid ${C.copperSoft}`, color: C.inkSoft }}>
+            <LogOut size={14} />
+          </button>
         </div>
       </header>
 

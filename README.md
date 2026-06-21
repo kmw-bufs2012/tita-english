@@ -33,12 +33,15 @@
 2. **Vercel 연결**
    - vercel.com → Add New → Project → 방금 만든 `tita-english` 저장소 Import
 
-3. **환경변수 3개 입력** (Deploy 누르기 전 Environment Variables 칸)
+3. **환경변수 6개 입력** (Deploy 누르기 전 Environment Variables 칸)
    | 이름 | 값 |
    |---|---|
    | `ELEVENLABS_API_KEY` | ElevenLabs API 키 (sk_...) |
    | `ELEVENLABS_VOICE_ID` | My Voices → Tita의 ID (영문+숫자) |
-   | `ANTHROPIC_API_KEY` | console.anthropic.com에서 발급 (회화 기능용) |
+   | `ANTHROPIC_API_KEY` | console.anthropic.com에서 발급 (회화·작문 채점용) |
+   | `AUTH_USER` | **로그인 아이디** (예: `tita`) — 본인만 알아두기 |
+   | `AUTH_PASSWORD` | **로그인 비밀번호** (충분히 길고 복잡하게) |
+   | `AUTH_SECRET` | 세션 서명용 비밀키 (랜덤 32+자, 예: `openssl rand -hex 32` 결과) |
 
 4. **Deploy** 클릭 → 끝나면 나오는 주소로 접속!
 
@@ -49,7 +52,25 @@ npm install
 npm run dev      # http://localhost:3000
 ```
 
-환경변수는 프로젝트 루트에 `.env.local` 파일을 만들어 위 3개 키를 넣으면 돼요.
+환경변수는 프로젝트 루트에 `.env.local` 파일을 만들어 위 6개 키를 넣으면 돼요.
+
+## 🔒 나만 쓰는 비공개 모드 (Private + 로그인)
+
+이 앱은 **본인만 접속 가능**하도록 두 겹의 보호가 가능해요.
+
+### 1) 앱 로그인 (이미 코드에 포함)
+- 모든 페이지·API가 미들웨어로 보호돼요. 세션 쿠키 없으면 자동으로 `/login`으로 이동.
+- 위에서 설정한 `AUTH_USER` / `AUTH_PASSWORD`로만 로그인 가능.
+- 세션은 30일 유지되며 헤더의 ↩️ 버튼으로 로그아웃.
+- 비밀번호 평문은 서버 환경변수에만 있고, 쿠키는 HMAC-SHA256(`AUTH_SECRET`)으로 서명·검증돼요.
+
+### 2) GitHub 저장소를 Private으로
+- github.com → 저장소 → **Settings** → 맨 아래 **Danger Zone** → **Change repository visibility** → **Make private** → 저장소 이름 확인 후 변경
+- (대안) 처음 만들 때 New repository → **Private** 선택
+
+### 3) Vercel 배포 자체에도 자물쇠를 (선택)
+- 앱 로그인 외에 Vercel 단계에서도 막고 싶다면:
+- Vercel → 프로젝트 → **Settings → Deployment Protection** → **Vercel Authentication** ON (팀원만 접근) 또는 **Password Protection** 설정
 
 ## 주의
 
