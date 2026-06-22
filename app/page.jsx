@@ -1328,7 +1328,7 @@ function HomeScreen({ xp, learnedCount, go, greeting }) {
       <div className="grid gap-3">
         {[
           { key: "cards", Icon: BookOpen, tint: C.copper, title: "단어 카드", sub: "연상법으로 외우기 · 특제/중학/고등/대학·IT·AI/대학원/IT실무" },
-          { key: "quiz", Icon: Brain, tint: C.teal, title: "조립 퀴즈", sub: "10문제로 빠르게! 즉시 채점" },
+          { key: "quiz", Icon: Brain, tint: C.teal, title: "조립 퀴즈", sub: "20문제로 빠르게! 즉시 채점" },
           { key: "grammar", Icon: GraduationCap, tint: C.brass, title: "영어 문법", sub: "중학·고등·수능 · 2022 개정 교육과정" },
           { key: "compose", Icon: FileText, tint: C.teal, title: "작문 연습", sub: "문장 영작·자유 작문 · 티타 AI 채점" },
           { key: "chat", Icon: MessageCircle, tint: C.pinkDeep, title: "티타와 회화", sub: "쉬운 영어로 대화 연습 (AI)" },
@@ -1608,7 +1608,7 @@ function QuizScreen({ learned, addXp }) {
 
   const dayList = mode === "biz" ? DAYS_BIZ : mode === "grad" ? DAYS_GRAD : mode === "pro" ? DAYS_PRO : mode === "hs" ? DAYS_HS : DAYS;
   const startPool = (pool) => {
-    const chosen = shuffle(pool).slice(0, 10);
+    const chosen = shuffle(pool).slice(0, 20);
     const built = chosen.map((w) => {
       const wrong = shuffle(QUIZ_POOL.filter((x) => x.en !== w.en && x.ko !== w.ko)).slice(0, 3).map((x) => x.ko);
       return { w, choices: shuffle([w.ko, ...wrong]) };
@@ -1641,7 +1641,7 @@ function QuizScreen({ learned, addXp }) {
         )}
         <ModeTabs mode={mode} setMode={setMode} />
         {mode === "special" ? (
-          <SetPicker title="퀴즈는 10문제! 짧고 굵게 가요." learned={learned}
+          <SetPicker title="퀴즈는 20문제! 짧고 굵게 가요." learned={learned}
             onPick={(id) => startPool(id === "all" ? ALL_WORDS : SETS.find((s) => s.id === id).words)} allowAll />
         ) : (
           <>
@@ -1658,7 +1658,7 @@ function QuizScreen({ learned, addXp }) {
   }
 
   if (phase === "done") {
-    const total = qs.length || 10;
+    const total = qs.length || 20;
     const great = score >= Math.ceil(total * 0.8);
     const okay = score >= Math.ceil(total * 0.4);
     return (
