@@ -2376,6 +2376,96 @@ const GRAMMAR_LEVELS = [
   { id: "gr", label: "대학원", tint: C.ink, intro: "대학원·학술 영어 문법! 명사화·헤징·분열문·학술 시제까지 논문 영어의 핵심을 정비해요." },
 ];
 
+function uniqueItems(items) {
+  return [...new Set(items.filter(Boolean))];
+}
+
+function pickItems(items, count, start = 0, exclude = []) {
+  const ban = new Set(exclude.filter(Boolean));
+  const clean = uniqueItems(items).filter((item) => !ban.has(item));
+  if (!clean.length) return [];
+  const offset = ((start % clean.length) + clean.length) % clean.length;
+  const rotated = [...clean.slice(offset), ...clean.slice(0, offset)];
+  return rotated.slice(0, count);
+}
+
+function makeChoices(correct, wrongs, answerIndex = 0) {
+  const picks = pickItems(wrongs, 2, answerIndex, [correct]);
+  const choices = [];
+  let wi = 0;
+  for (let i = 0; i < 3; i += 1) {
+    if (i === answerIndex) choices.push(correct);
+    else {
+      choices.push(picks[wi] || correct);
+      wi += 1;
+    }
+  }
+  return { choices, answer: answerIndex };
+}
+
+function buildGrammarQuiz(topic, topics) {
+  const baseQuiz = Array.isArray(topic.quiz) ? topic.quiz : [];
+  if (baseQuiz.length >= 5) return baseQuiz.slice(0, 5);
+
+  const topicIndex = Math.max(0, topics.findIndex((item) => item.id === topic.id));
+  const otherTopics = topics.filter((item) => item.id !== topic.id);
+  const keyPool = otherTopics.map((item) => item.key);
+  const rulePool = otherTopics.flatMap((item) => item.rules || []);
+  const koPool = otherTopics.flatMap((item) => (item.examples || []).map((ex) => ex.ko));
+  const enPool = otherTopics.flatMap((item) => (item.examples || []).map((ex) => ex.en));
+  const examples = Array.isArray(topic.examples) ? topic.examples : [];
+  const firstExample = examples[topicIndex % Math.max(1, examples.length)] || examples[0];
+  const secondExample = examples[(topicIndex + 1) % Math.max(1, examples.length)] || examples[1] || examples[0];
+  const extraQuiz = [];
+
+  if (topic.key && keyPool.length >= 2) {
+    const choiceSet = makeChoices(topic.key, keyPool, topicIndex % 3);
+    extraQuiz.push({
+      q: "이 단원의 핵심으로 가장 알맞은 것은?",
+      choices: choiceSet.choices,
+      answer: choiceSet.answer,
+      explain: `핵심은 ‘${topic.key}’예요.`,
+    });
+  }
+
+  if (firstExample?.en && firstExample?.ko && koPool.length >= 2) {
+    const choiceSet = makeChoices(firstExample.ko, koPool, (topicIndex + 1) % 3);
+    extraQuiz.push({
+      q: `다음 영어 문장의 뜻으로 맞는 것은? ${firstExample.en}`,
+      choices: choiceSet.choices,
+      answer: choiceSet.answer,
+      explain: `이 문장은 ‘${firstExample.ko}’라는 뜻이에요.`,
+    });
+  }
+
+  if (secondExample?.en && secondExample?.ko && enPool.length >= 2) {
+    const choiceSet = makeChoices(secondExample.en, enPool, (topicIndex + 2) % 3);
+    extraQuiz.push({
+      q: `다음 뜻에 맞는 영어 문장은? ${secondExample.ko}`,
+      choices: choiceSet.choices,
+      answer: choiceSet.answer,
+      explain: `맞는 문장은 ‘${secondExample.en}’예요.`,
+    });
+  }
+
+  if (topic.rules?.[0] && rulePool.length >= 2) {
+    const choiceSet = makeChoices(topic.rules[0], rulePool, topicIndex % 3);
+    extraQuiz.push({
+      q: "다음 중 이 단원 규칙으로 맞는 것은?",
+      choices: choiceSet.choices,
+      answer: choiceSet.answer,
+      explain: `이 단원에서 먼저 기억할 규칙은 ‘${topic.rules[0]}’예요.`,
+    });
+  }
+
+  const merged = [...baseQuiz];
+  for (const item of extraQuiz) {
+    if (merged.length >= 5) break;
+    if (!merged.some((quiz) => quiz.q === item.q)) merged.push(item);
+  }
+  return merged.slice(0, 5);
+}
+
 /* 한 번에 한 가지만 보이게 접었다 펴는 카드 (ADHD 친화: 인지 부하 ↓) */
 function Collapsible({ icon, label, accent, count, defaultOpen = false, children }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -2464,7 +2554,8 @@ function GrammarQuiz({ quiz, tint }) {
   );
 }
 
-function GrammarLesson({ topic, tint, onBack }) {
+function GrammarLesson({ topic, topics, tint, onBack }) {
+  const quiz = buildGrammarQuiz(topic, topics);
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
@@ -2524,9 +2615,9 @@ function GrammarLesson({ topic, tint, onBack }) {
         </div>
       </Collapsible>
 
-      {Array.isArray(topic.quiz) && topic.quiz.length > 0 && (
-        <Collapsible icon={<Brain size={16} />} label="확인 문제" accent={C.pinkDeep} count={topic.quiz.length}>
-          <GrammarQuiz quiz={topic.quiz} tint={tint} />
+      {quiz.length > 0 && (
+        <Collapsible icon={<Brain size={16} />} label="확인 문제" accent={C.pinkDeep} count={quiz.length}>
+          <GrammarQuiz quiz={quiz} tint={tint} />
         </Collapsible>
       )}
     </div>
@@ -2540,7 +2631,7 @@ function GrammarScreen() {
   const topics = GRAMMAR[lvl] || [];
   const topic = topicId ? topics.find((t) => t.id === topicId) : null;
 
-  if (topic) return <GrammarLesson topic={topic} tint={level.tint} onBack={() => setTopicId(null)} />;
+  if (topic) return <GrammarLesson topic={topic} topics={topics} tint={level.tint} onBack={() => setTopicId(null)} />;
 
   return (
     <div className="flex flex-col gap-3">
