@@ -1136,41 +1136,30 @@ const stopAudio = () => {
   try { if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
 };
 
-// 기기 기본 목소리 (어린 소녀 톤) — 서버 연결 실패 시 대비책
-let titaVoice = null;
-const pickTitaVoice = () => {
+// 티타 목소리를 불러오지 못했을 때 띄우는 가벼운 안내.
+// 예전에는 기기 기본 목소리로 대신 읽어줬지만, 그러면 완전히 다른 목소리가 나와서
+// "목소리가 자꾸 변한다"는 문제가 생겼다. 이제는 다른 목소리를 절대 내지 않고,
+// 잠깐 안내만 보여준 뒤 다음 시도를 기다린다(= 항상 티타 목소리만).
+let voiceNoticeTimer = null;
+const showVoiceNotice = () => {
   try {
-    const voices = window.speechSynthesis.getVoices() || [];
-    const en = voices.filter((v) => v.lang && v.lang.toLowerCase().startsWith("en"));
-    const us = en.filter((v) => v.lang.toLowerCase().includes("us"));
-    const pool = us.length ? us : en;
-    const find = (test) => pool.find((v) => test(v.name.toLowerCase()));
-    titaVoice =
-      find((n) => /\b(child|kid|girl|junior)\b/.test(n) || /\bana\b/.test(n)) ||
-      find((n) => ["samantha", "zira", "jenny", "aria", "michelle", "salli", "joanna", "ivy", "female"].some((k) => n.includes(k))) ||
-      find((n) => n.includes("google us english")) ||
-      pool[0] || null;
-  } catch (e) {}
-};
-if (typeof window !== "undefined") {
-  try {
-    if (window.speechSynthesis) {
-      pickTitaVoice();
-      window.speechSynthesis.onvoiceschanged = pickTitaVoice;
+    if (typeof document === "undefined") return;
+    let el = document.getElementById("tita-voice-notice");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "tita-voice-notice";
+      el.setAttribute("role", "status");
+      el.style.cssText =
+        "position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:9999;" +
+        "max-width:90vw;padding:10px 16px;border-radius:9999px;font-size:14px;font-weight:600;" +
+        "color:#fff;background:rgba(40,40,50,.92);box-shadow:0 6px 20px rgba(0,0,0,.25);" +
+        "pointer-events:none;transition:opacity .3s;opacity:0;";
+      document.body.appendChild(el);
     }
-  } catch (e) {}
-}
-
-const speak = (text) => {
-  try {
-    if (!titaVoice) pickTitaVoice();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "en-US";
-    if (titaVoice) u.voice = titaVoice;
-    u.pitch = 1.35;
-    u.rate = 0.85;
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(u);
+    el.textContent = "티타 목소리를 지금 불러올 수 없어요. 잠시 후 다시 시도해 주세요 🎙️";
+    el.style.opacity = "1";
+    if (voiceNoticeTimer) clearTimeout(voiceNoticeTimer);
+    voiceNoticeTimer = setTimeout(() => { el.style.opacity = "0"; }, 2600);
   } catch (e) {}
 };
 
@@ -1200,7 +1189,8 @@ const fetchTitaAudio = async (text, attempt = 0) => {
   }
 };
 
-// 통합 재생: 서버 중계 성공 → 진짜 티타 보이스 / (재시도 후에도) 실패 → 기기 기본 목소리
+// 통합 재생: 오직 진짜 티타 보이스만 재생. 재시도 후에도 실패하면
+// 다른 목소리로 바꾸지 않고 가벼운 안내만 띄운다(= 목소리 일관성 보장).
 const titaSpeak = async (text) => {
   if (!text) return false;
   try {
@@ -1219,7 +1209,7 @@ const titaSpeak = async (text) => {
     if (typeof window !== "undefined" && !window.__titaErr) {
       window.__titaErr = { status: 0, detail: String((e && e.message) || e) };
     }
-    speak(text);
+    showVoiceNotice();
     return false;
   }
 };
