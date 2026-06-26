@@ -1174,25 +1174,39 @@ const speak = (text) => {
   } catch (e) {}
 };
 
-// 통합 재생: 서버 중계 성공 → 진짜 티타 보이스 / 실패 → 기기 기본 목소리
+// /api/tts 호출 → 오디오 URL. 일시적 실패(네트워크/429 등)는 한 번 더 시도해서
+// 곧바로 기기 기본 목소리로 바뀌는(= 목소리가 변하는) 일을 줄인다.
+const fetchTitaAudio = async (text, attempt = 0) => {
+  try {
+    const res = await fetch("/api/tts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+    if (!res.ok) {
+      let detail = "";
+      try { detail = ((await res.json()).error || "").slice(0, 200); } catch (e2) {}
+      window.__titaErr = { status: res.status, detail };
+      throw new Error("tts " + res.status);
+    }
+    const blob = await res.blob();
+    return URL.createObjectURL(blob);
+  } catch (e) {
+    if (attempt < 1) {
+      await new Promise((r) => setTimeout(r, 500));
+      return fetchTitaAudio(text, attempt + 1);
+    }
+    throw e;
+  }
+};
+
+// 통합 재생: 서버 중계 성공 → 진짜 티타 보이스 / (재시도 후에도) 실패 → 기기 기본 목소리
 const titaSpeak = async (text) => {
   if (!text) return false;
   try {
     let url = ttsCache.get(text);
     if (!url) {
-      const res = await fetch("/api/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-      });
-      if (!res.ok) {
-        let detail = "";
-        try { detail = ((await res.json()).error || "").slice(0, 200); } catch (e2) {}
-        window.__titaErr = { status: res.status, detail };
-        throw new Error("tts " + res.status);
-      }
-      const blob = await res.blob();
-      url = URL.createObjectURL(blob);
+      url = await fetchTitaAudio(text);
       ttsCache.set(text, url);
     }
     window.__titaErr = null;
