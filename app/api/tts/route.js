@@ -9,6 +9,13 @@ export async function POST(req) {
 
     const key = process.env.ELEVENLABS_API_KEY;
     const voiceId = process.env.ELEVENLABS_VOICE_ID;
+
+    // 말하기 속도 (느릴수록 작은 값). ElevenLabs 허용 범위 0.7~1.2, 기본 1.0.
+    // 환경변수 ELEVENLABS_SPEED로 조정 가능, 기본은 살짝 느린 0.85.
+    let speed = parseFloat(process.env.ELEVENLABS_SPEED);
+    if (!Number.isFinite(speed)) speed = 0.85;
+    speed = Math.min(1.2, Math.max(0.7, speed));
+
     if (!key || !voiceId) {
       return Response.json(
         { error: "환경변수 ELEVENLABS_API_KEY / ELEVENLABS_VOICE_ID가 비어 있어요" },
@@ -24,7 +31,7 @@ export async function POST(req) {
         body: JSON.stringify({
           text: String(text).slice(0, 600),
           model_id: "eleven_multilingual_v2",
-          voice_settings: { stability: 0.5, similarity_boost: 0.75 },
+          voice_settings: { stability: 0.5, similarity_boost: 0.75, speed: speed },
         }),
       }
     );

@@ -1168,7 +1168,7 @@ const speak = (text) => {
     u.lang = "en-US";
     if (titaVoice) u.voice = titaVoice;
     u.pitch = 1.35;
-    u.rate = 0.95;
+    u.rate = 0.85;
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(u);
   } catch (e) {}
