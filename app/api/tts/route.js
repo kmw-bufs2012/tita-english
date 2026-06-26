@@ -30,7 +30,9 @@ export async function POST(req) {
         headers: { "xi-api-key": key, "Content-Type": "application/json" },
         body: JSON.stringify({
           text: String(text).slice(0, 600),
-          model_id: "eleven_multilingual_v2",
+          // 크레딧 절약(글자당 1→0.5)을 위해 Turbo v2.5로 전환.
+          // voice_settings(stability/similarity_boost/style/speaker_boost)와 seed는 그대로 지원됨.
+          model_id: "eleven_turbo_v2_5",
           // seed 고정 → 같은 문장은 매번 (거의) 같은 목소리로 생성 (best-effort 결정론).
           // seed는 voice_settings 안이 아니라 본문 최상위 필드여야 함.
           seed: 12345,
