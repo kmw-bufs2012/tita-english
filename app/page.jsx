@@ -1128,7 +1128,8 @@ const levelInfo = (xp) => {
 };
 
 /* ───────── 티타 보이스 (내 서버 /api/tts가 ElevenLabs를 대신 호출) ───────── */
-const VOICE_CFG = { autoPlay: true };
+// autoPlay: 자동재생 / simBoost: 유사도 부스트(기본 off=0.75) / speakerBoost: 스피커 부스트(기본 on)
+const VOICE_CFG = { autoPlay: true, simBoost: false, speakerBoost: true };
 const ttsCache = new Map();
 let currentAudio = null;
 const stopAudio = () => {
@@ -1170,7 +1171,11 @@ const fetchTitaAudio = async (text, attempt = 0) => {
     const res = await fetch("/api/tts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({
+        text,
+        simBoost: VOICE_CFG.simBoost === true,
+        speakerBoost: VOICE_CFG.speakerBoost !== false,
+      }),
     });
     if (!res.ok) {
       let detail = "";
@@ -1194,10 +1199,13 @@ const fetchTitaAudio = async (text, attempt = 0) => {
 const titaSpeak = async (text) => {
   if (!text) return false;
   try {
-    let url = ttsCache.get(text);
+    // 토글 상태가 다르면 다른 음성이므로 캐시 키에 포함한다.
+    const cacheKey =
+      text + "|" + (VOICE_CFG.simBoost === true ? "1" : "0") + (VOICE_CFG.speakerBoost !== false ? "1" : "0");
+    let url = ttsCache.get(cacheKey);
     if (!url) {
       url = await fetchTitaAudio(text);
-      ttsCache.set(text, url);
+      ttsCache.set(cacheKey, url);
     }
     window.__titaErr = null;
     stopAudio();
@@ -8387,17 +8395,25 @@ function ChatScreen() {
   const [loading, setLoading] = useState(false);
   const [cfgOpen, setCfgOpen] = useState(false);
   const [autoPlay, setAutoPlay] = useState(true);
+  const [simBoost, setSimBoost] = useState(false);
+  const [speakerBoost, setSpeakerBoost] = useState(true);
   const [voiceMsg, setVoiceMsg] = useState("");
   const endRef = useRef(null);
 
-  useEffect(() => { setAutoPlay(VOICE_CFG.autoPlay !== false); }, []);
+  useEffect(() => {
+    setAutoPlay(VOICE_CFG.autoPlay !== false);
+    setSimBoost(VOICE_CFG.simBoost === true);
+    setSpeakerBoost(VOICE_CFG.speakerBoost !== false);
+  }, []);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
 
-  const toggleAuto = (v) => {
-    setAutoPlay(v);
-    VOICE_CFG.autoPlay = v;
-    try { localStorage.setItem("tita-voice-v1", JSON.stringify({ autoPlay: v })); } catch (e) {}
+  // VOICE_CFG 전체를 저장 (일부만 저장하면 다른 토글이 지워지므로 항상 통째로)
+  const saveVoiceCfg = () => {
+    try { localStorage.setItem("tita-voice-v1", JSON.stringify(VOICE_CFG)); } catch (e) {}
   };
+  const toggleAuto = (v) => { setAutoPlay(v); VOICE_CFG.autoPlay = v; saveVoiceCfg(); };
+  const toggleSim = (v) => { setSimBoost(v); VOICE_CFG.simBoost = v; saveVoiceCfg(); };
+  const toggleSpeaker = (v) => { setSpeakerBoost(v); VOICE_CFG.speakerBoost = v; saveVoiceCfg(); };
 
   const testVoice = async () => {
     setVoiceMsg("티타 보이스 테스트 중…");
@@ -8463,10 +8479,23 @@ function ChatScreen() {
           <p className="text-xs mb-3" style={{ color: C.inkSoft }}>
             API 키는 Vercel 서버(환경변수)에 안전하게 보관돼요. 앱에는 입력할 게 없어요!
           </p>
-          <label className="flex items-center gap-2 text-xs mb-3" style={{ color: C.ink }}>
+          <label className="flex items-center gap-2 text-xs mb-2" style={{ color: C.ink }}>
             <input type="checkbox" checked={autoPlay} onChange={(e) => toggleAuto(e.target.checked)} />
             티타가 답장하면 자동으로 음성 재생
           </label>
+
+          <div className="rounded-lg p-2 mb-3" style={{ background: C.paper, border: "1px dashed " + C.copperSoft }}>
+            <p className="text-[11px] font-bold mb-1" style={{ color: C.inkSoft }}>목소리 미세조정</p>
+            <label className="flex items-start gap-2 text-xs mb-2" style={{ color: C.ink }}>
+              <input type="checkbox" checked={simBoost} onChange={(e) => toggleSim(e.target.checked)} className="mt-0.5" />
+              <span>유사도 부스트 <span style={{ color: C.inkSoft }}>— 켜면 원본 샘플에 더 밀착(0.9), 끄면 더 안정적(0.75)</span></span>
+            </label>
+            <label className="flex items-start gap-2 text-xs" style={{ color: C.ink }}>
+              <input type="checkbox" checked={speakerBoost} onChange={(e) => toggleSpeaker(e.target.checked)} className="mt-0.5" />
+              <span>스피커 부스트 <span style={{ color: C.inkSoft }}>— 화자 유사도 강화. 톤이 들쑥날쑥하면 꺼 보세요</span></span>
+            </label>
+          </div>
+
           <div className="flex gap-2">
             <button onClick={playSample} className="flex-1 rounded-lg py-2 text-xs font-bold press"
               style={{ background: C.paper, border: "2px solid " + C.copperSoft, color: C.copper }}>
