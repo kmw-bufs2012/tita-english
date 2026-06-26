@@ -8833,6 +8833,15 @@ function GrammarScreen() {
   );
 }
 
+/* ───────── 화면 ↔ 주소(URL) 매핑 ───────── */
+// 새로고침해도 현재 페이지가 유지되고, 페이지마다 고유 주소를 갖도록.
+const SCREEN_KEYS = ["home", "cards", "write", "quiz", "grammar", "compose", "chat"];
+const pathToScreen = (path) => {
+  const seg = (path || "/").split("/")[1] || "home"; // "/quiz" → "quiz", "/" → "home"
+  return SCREEN_KEYS.includes(seg) ? seg : "home";
+};
+const screenToPath = (key) => (key === "home" ? "/" : "/" + key);
+
 /* ───────── 메인 앱 ───────── */
 export default function TitaEnglishWorkshop() {
   const [screen, setScreen] = useState("home");
@@ -8852,6 +8861,28 @@ export default function TitaEnglishWorkshop() {
     } catch (e) {}
     setGreeting(GREETINGS[Math.floor(Math.random() * GREETINGS.length)]);
   }, []);
+
+  // 주소(URL) ↔ 화면 동기화
+  // - 첫 로드/새로고침: 주소에 맞는 화면을 복원 (메인으로 안 돌아감)
+  // - 뒤로/앞으로 가기: popstate로 화면 갱신
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setScreen(pathToScreen(window.location.pathname));
+    const onPop = () => setScreen(pathToScreen(window.location.pathname));
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  // 화면 전환 + 주소 갱신(히스토리 추가). 서버 왕복 없이 클라이언트에서만 바뀜.
+  const navigate = (key) => {
+    setScreen(key);
+    try {
+      if (typeof window !== "undefined") {
+        const p = screenToPath(key);
+        if (window.location.pathname !== p) window.history.pushState(null, "", p);
+      }
+    } catch (e) {}
+  };
 
   const persist = (nxp, nlearned) => {
     try { localStorage.setItem("tita-english-v1", JSON.stringify({ xp: nxp, learned: nlearned })); } catch (e) {}
@@ -8911,7 +8942,7 @@ export default function TitaEnglishWorkshop() {
 
       {/* 본문 */}
       <main className="flex-1 px-4 py-4 pb-24 w-full max-w-md mx-auto" style={{ minHeight: 0 }}>
-        {screen === "home" && <HomeScreen xp={xp} learnedCount={learnedCount} go={setScreen} greeting={greeting} />}
+        {screen === "home" && <HomeScreen xp={xp} learnedCount={learnedCount} go={navigate} greeting={greeting} />}
         {screen === "cards" && <CardsScreen learned={learned} markLearned={markLearned} />}
         {screen === "write" && <WritingScreen learned={learned} markLearned={markLearned} />}
         {screen === "quiz" && <QuizScreen learned={learned} addXp={addXp} />}
@@ -8934,7 +8965,7 @@ export default function TitaEnglishWorkshop() {
           ].map(({ key, Icon, label }) => {
             const active = screen === key;
             return (
-              <button key={key} onClick={() => setScreen(key)} className="flex flex-col items-center gap-1 py-2 press">
+              <button key={key} onClick={() => navigate(key)} className="flex flex-col items-center gap-1 py-2 press">
                 <Icon size={22} style={{ color: active ? C.pinkDeep : C.inkSoft }} />
                 <span className="text-xs font-bold" style={{ color: active ? C.pinkDeep : C.inkSoft }}>{label}</span>
               </button>
