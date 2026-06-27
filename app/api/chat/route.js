@@ -1,4 +1,4 @@
-// 티타 회화 — 서버가 Anthropic API를 대신 호출해요.
+// 티타 회화 — 서버가 OpenAI API를 대신 호출해요.
 export const runtime = "nodejs";
 
 const TITA_SYSTEM = `You are Tita Russell (티타 러셀), the cheerful young genius engineer from Zeiss Central Factory in the Trails (궤적) series. You are the user's friendly English conversation partner and study buddy. The user is a Korean adult learning English (beginner to pre-intermediate). You do NOT know the user's name yet.
@@ -20,27 +20,30 @@ Respond ONLY with raw JSON, no markdown, no code fences:
 export async function POST(req) {
   try {
     const { messages } = await req.json();
-    const key = process.env.ANTHROPIC_API_KEY;
+    const key = process.env.OPENAI_API_KEY;
     if (!key) {
       return Response.json({
         english: "My talking orbment needs a key!",
-        korean: "Vercel 환경변수에 ANTHROPIC_API_KEY를 넣어 주세요. (회화 기능에 필요해요)",
+        korean: "Vercel 환경변수에 OPENAI_API_KEY를 넣어 주세요. (회화 기능에 필요해요)",
         tip: null,
       });
     }
 
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
+    const userMessages = Array.isArray(messages) ? messages.slice(-30) : [];
+
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        "x-api-key": key,
-        "anthropic-version": "2023-06-01",
+        "Authorization": "Bearer " + key,
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
+        model: "gpt-4.1-nano",
         max_tokens: 1000,
-        system: TITA_SYSTEM,
-        messages: Array.isArray(messages) ? messages.slice(-30) : [],
+        messages: [
+          { role: "system", content: TITA_SYSTEM },
+          ...userMessages,
+        ],
       }),
     });
 
@@ -54,7 +57,7 @@ export async function POST(req) {
       });
     }
 
-    const raw = (data.content || []).map((i) => i.text || "").join("");
+    const raw = (data.choices?.[0]?.message?.content) || "";
     let parsed;
     try {
       parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
