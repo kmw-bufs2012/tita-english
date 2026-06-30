@@ -38,8 +38,9 @@ export async function POST(req) {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4.1-nano",
-        max_tokens: 1000,
+        model: "gpt-5.4-mini",
+        // GPT-5 계열은 max_tokens 대신 max_completion_tokens를 써야 함.
+        max_completion_tokens: 1000,
         messages: [
           { role: "system", content: TITA_SYSTEM },
           ...userMessages,
