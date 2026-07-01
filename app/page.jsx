@@ -1055,8 +1055,15 @@ const SETS = [
       { en: "break down", pron: "브레이크 다운", ko: "고장 나다, 무너지다", mn: "‘브레이크 다운’ 부서져(break) 다운, 고장 나다", ex: "My car broke down today.", exKo: "오늘 제 차가 고장 났어요." },
     ],
   },
+];
+
+const ALL_WORDS = SETS.flatMap((s) => s.words.map((w) => ({ ...w, setId: s.id })));
+const TOTAL_WORDS_SPECIAL = ALL_WORDS.length;
+
+/* ───────── ADHD 카테고리 (기본·중급·의대) ───────── */
+const ADHD_SETS = [
   {
-    id: "adhd", name: "ADHD 집중", desc: "ADHD 영단어 105개 (연상법 포함)", Icon: Target, tint: C.pinkDeep,
+    id: "adhd-a", name: "ADHD 기본", desc: "기본 단어 25개", Icon: Target, tint: C.pinkDeep,
     words: [
       { en: "attention", pron: "어텐션", ko: "주의, 집중", mn: "가장 기본! ADHD의 A(Attention)" },
       { en: "focus", pron: "포커스", ko: "집중, 초점", mn: "카메라 '포커스' 맞추듯 정신을 맞추다" },
@@ -1083,6 +1090,11 @@ const SETS = [
       { en: "anxiety", pron: "앵자이어티", ko: "불안", mn: "'앵~' 하고 조여오는 불안" },
       { en: "therapy", pron: "세러피", ko: "치료(요법)", mn: "마음을 '세러' 다독이는 치료" },
       { en: "adult", pron: "어덜트", ko: "성인", mn: "'어른'의 어 → adult" },
+    ],
+  },
+  {
+    id: "adhd-b", name: "ADHD 중급", desc: "중급 의학용어 30개", Icon: Target, tint: C.pink,
+    words: [
       { en: "attention deficit", pron: "어텐션 데피싯", ko: "주의력 결핍", mn: "deficit=부족 (ADHD의 'AD')" },
       { en: "hyperactivity", pron: "하이퍼액티비티", ko: "과잉행동", mn: "hyper(넘침)+activity(활동)" },
       { en: "impulsivity", pron: "임펄시비티", ko: "충동성", mn: "충동(impulse)의 성질" },
@@ -1113,6 +1125,11 @@ const SETS = [
       { en: "psychiatric", pron: "사이키애트릭", ko: "정신과의", mn: "psyche(마음) 치료 관련" },
       { en: "functional impairment", pron: "펑셔널 임페어먼트", ko: "기능 손상", mn: "일상 기능이 망가짐(impair)" },
       { en: "adherence", pron: "어드히어런스", ko: "(치료) 순응도", mn: "약을 꾸준히 '붙어서(adhere)' 지킴" },
+    ],
+  },
+  {
+    id: "adhd-c", name: "ADHD 의대", desc: "의대생 수준 50개", Icon: Target, tint: C.copper,
+    words: [
       { en: "amphetamine", pron: "암페타민", ko: "암페타민", mn: "각성제 원조 성분" },
       { en: "dextroamphetamine", pron: "덱스트로암페타민", ko: "덱스트로암페타민", mn: "dextro(오른쪽)+암페타민" },
       { en: "lisdexamfetamine", pron: "리스덱삼페타민", ko: "리스덱스암페타민", mn: "몸속서 천천히 바뀌는 약(바이반스)" },
@@ -1165,8 +1182,12 @@ const SETS = [
       { en: "cognitive behavioral therapy", pron: "코그니티브 비헤이비어럴", ko: "인지행동치료", mn: "생각·행동 바꾸는 상담치료(CBT)" },
     ],
   },
+];
+
+/* ───────── 뇌병증 카테고리 (기본·중급·의대) ───────── */
+const BRAIN_SETS = [
   {
-    id: "brain", name: "뇌·신경", desc: "뇌병증 영단어 127개 (연상법 포함)", Icon: Brain, tint: C.teal,
+    id: "brain-a", name: "뇌병증 기본", desc: "기본 단어 22개", Icon: Brain, tint: C.teal,
     words: [
       { en: "brain", pron: "브레인", ko: "뇌", mn: "가장 기본 단어" },
       { en: "nerve", pron: "너브", ko: "신경", mn: "'너브' 하고 찌릿한 신경" },
@@ -1190,6 +1211,11 @@ const SETS = [
       { en: "alertness", pron: "얼럿니스", ko: "각성, 깨어있음", mn: "alert(경계) 상태로 또렷함" },
       { en: "disability", pron: "디서빌리티", ko: "장애", mn: "dis(반대)+ability(능력)" },
       { en: "recover", pron: "리커버", ko: "회복하다", mn: "다시(re) 덮다(cover) → 낫다" },
+    ],
+  },
+  {
+    id: "brain-b", name: "뇌병증 중급", desc: "중급 의학용어 30개", Icon: Brain, tint: C.brass,
+    words: [
       { en: "encephalopathy", pron: "엔세팔로파시", ko: "뇌병증", mn: "encephalo(뇌)+pathy(병) → 핵심 단어!" },
       { en: "encephalitis", pron: "엔세팔라이티스", ko: "뇌염", mn: "encephalo(뇌)+itis(염증)" },
       { en: "neurological", pron: "뉴럴로지컬", ko: "신경학적인", mn: "neuro(신경)+logy(학문)" },
@@ -1220,6 +1246,11 @@ const SETS = [
       { en: "cerebrospinal fluid", pron: "세레브로스파이널 플루이드", ko: "뇌척수액", mn: "뇌·척수를 감싸는 물" },
       { en: "neuroplasticity", pron: "뉴로플래스티시티", ko: "신경가소성", mn: "뇌가 스스로 바뀌고 회복하는 힘" },
       { en: "deficit", pron: "데피싯", ko: "결손, 부족", mn: "모자란 상태" },
+    ],
+  },
+  {
+    id: "brain-c", name: "뇌병증 의대", desc: "의대생 수준 75개", Icon: Brain, tint: C.copper,
+    words: [
       { en: "hepatic encephalopathy", pron: "허패틱", ko: "간성 뇌병증", mn: "hepat=간 → 간이 나빠 생긴 뇌병증" },
       { en: "hypoxic-ischemic encephalopathy", pron: "하이폭식 이스키믹", ko: "저산소성-허혈성 뇌병증", mn: "산소·피 부족으로 온 뇌손상(HIE)" },
       { en: "hypertensive encephalopathy", pron: "하이퍼텐시브", ko: "고혈압성 뇌병증", mn: "혈압이 확 올라 생긴 뇌병증" },
@@ -1299,8 +1330,7 @@ const SETS = [
   },
 ];
 
-const ALL_WORDS = SETS.flatMap((s) => s.words.map((w) => ({ ...w, setId: s.id })));
-const TOTAL_WORDS_SPECIAL = ALL_WORDS.length;
+const SET_GROUPS = { special: SETS, adhd: ADHD_SETS, brain: BRAIN_SETS };
 
 /* ───────── 중학 영단어 1800 (Day당 20개) ───────── */
 const WORD_LIB =
@@ -1605,11 +1635,11 @@ function HomeScreen({ xp, learnedCount, go, greeting }) {
 }
 
 /* ───────── 세트 선택 ───────── */
-function SetPicker({ title, learned, onPick, allowAll }) {
+function SetPicker({ title, learned, onPick, allowAll, sets = SETS }) {
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm" style={{ color: C.inkSoft }}>{title}</p>
-      {SETS.map((s) => {
+      {sets.map((s) => {
         const done = s.words.filter((w) => learned[w.en]).length;
         return (
           <button key={s.id} onClick={() => onPick(s.id)}
@@ -1645,6 +1675,8 @@ function ModeTabs({ mode, setMode }) {
     { id: "lib", label: "중학 1800" },
     { id: "hs", label: "고등 4800" },
     { id: "special", label: "특제 1000" },
+    { id: "adhd", label: "ADHD" },
+    { id: "brain", label: "뇌병증" },
     { id: "pro", label: "대학·IT·AI 2500" },
     { id: "grad", label: "대학원 IT·AI 3000" },
     { id: "biz", label: "IT 실무 2000" },
@@ -1706,16 +1738,19 @@ function CardsScreen({ learned, markLearned }) {
   }, []);
 
   const dayList = mode === "biz" ? DAYS_BIZ : mode === "grad" ? DAYS_GRAD : mode === "pro" ? DAYS_PRO : mode === "hs" ? DAYS_HS : DAYS;
-  const words = mode === "special"
-    ? (setId ? SETS.find((s) => s.id === setId).words : null)
+  const group = SET_GROUPS[mode] || null;
+  const words = group
+    ? (setId ? group.find((s) => s.id === setId).words : null)
     : (dayIdx !== null ? dayList[dayIdx] : null);
 
   if (!words) {
     return (
       <div className="flex flex-col gap-3">
         <ModeTabs mode={mode} setMode={(m) => { setMode(m); setSetId(null); setDayIdx(null); }} />
-        {mode === "special" ? (
-          <SetPicker title="연상법이 미리 들어 있는 특제 세트예요." learned={learned}
+        {group ? (
+          <SetPicker sets={group}
+            title={mode === "special" ? "연상법이 미리 들어 있는 특제 세트예요." : "레벨을 골라 주세요. 기본부터 차근차근!"}
+            learned={learned}
             onPick={(id) => { setSetId(id); setIdx(0); setFlip(false); }} />
         ) : (
           <LibDayGrid days={dayList} learned={learned} onPick={(i) => { setDayIdx(i); setIdx(0); setFlip(false); }} />
@@ -1727,8 +1762,8 @@ function CardsScreen({ learned, markLearned }) {
   const w = words[idx];
   const isLearned = !!learned[w.en];
   const mn = w.mn || mnMap[w.en] || null;
-  const title = mode === "special" ? SETS.find((s) => s.id === setId).name + " 세트" : (mode === "biz" ? "IT 실무 2000" : mode === "grad" ? "대학원 IT·AI 3000" : mode === "pro" ? "대학·IT·AI 2500" : mode === "hs" ? "고등 4800" : "중학 1800") + " · Day " + (dayIdx + 1);
-  const tint = mode === "special" ? SETS.find((s) => s.id === setId).tint : mode === "biz" ? C.pink : mode === "grad" ? C.pinkDeep : mode === "pro" ? C.copper : mode === "hs" ? C.teal : C.brass;
+  const title = group ? group.find((s) => s.id === setId).name + " 세트" : (mode === "biz" ? "IT 실무 2000" : mode === "grad" ? "대학원 IT·AI 3000" : mode === "pro" ? "대학·IT·AI 2500" : mode === "hs" ? "고등 4800" : "중학 1800") + " · Day " + (dayIdx + 1);
+  const tint = group ? group.find((s) => s.id === setId).tint : mode === "biz" ? C.pink : mode === "grad" ? C.pinkDeep : mode === "pro" ? C.copper : mode === "hs" ? C.teal : C.brass;
 
   const goBack = () => { setSetId(null); setDayIdx(null); setFlip(false); setIdx(0); setMnErr(""); };
   const next = () => { setFlip(false); setJustGot(false); setMnErr(""); setIdx((i) => (i + 1) % words.length); };
@@ -1861,6 +1896,7 @@ function QuizScreen({ learned, addXp }) {
   };
 
   const dayList = mode === "biz" ? DAYS_BIZ : mode === "grad" ? DAYS_GRAD : mode === "pro" ? DAYS_PRO : mode === "hs" ? DAYS_HS : DAYS;
+  const group = SET_GROUPS[mode] || null;
   const startPool = (pool) => {
     const chosen = shuffle(pool).slice(0, 20);
     const built = chosen.map((w) => {
@@ -1894,9 +1930,9 @@ function QuizScreen({ learned, addXp }) {
           </Panel>
         )}
         <ModeTabs mode={mode} setMode={setMode} />
-        {mode === "special" ? (
-          <SetPicker title="퀴즈는 20문제! 짧고 굵게 가요." learned={learned}
-            onPick={(id) => startPool(id === "all" ? ALL_WORDS : SETS.find((s) => s.id === id).words)} allowAll />
+        {group ? (
+          <SetPicker sets={group} title="퀴즈는 20문제! 짧고 굵게 가요." learned={learned}
+            onPick={(id) => startPool(id === "all" ? group.flatMap((s) => s.words) : group.find((s) => s.id === id).words)} allowAll />
         ) : (
           <>
             <LibDayGrid days={dayList} learned={learned} onPick={(i) => startPool(dayList[i])} />
@@ -2169,8 +2205,9 @@ function WritingScreen({ learned, markLearned }) {
   const [justGot, setJustGot] = useState(false);
 
   const dayList = mode === "biz" ? DAYS_BIZ : mode === "grad" ? DAYS_GRAD : mode === "pro" ? DAYS_PRO : mode === "hs" ? DAYS_HS : DAYS;
-  const words = mode === "special"
-    ? (setId ? SETS.find((s) => s.id === setId).words : null)
+  const group = SET_GROUPS[mode] || null;
+  const words = group
+    ? (setId ? group.find((s) => s.id === setId).words : null)
     : (dayIdx !== null ? dayList[dayIdx] : null);
 
   if (!words) {
@@ -2180,8 +2217,10 @@ function WritingScreen({ learned, markLearned }) {
           ✍️ 태블릿 + 펜으로 단어를 5번씩 따라 쓰는 연습장이에요. 1행의 연한 글씨를 따라 쓰고, 나머지 줄은 혼자 써 보세요. 손이 기억해 줘요!
         </p>
         <ModeTabs mode={mode} setMode={(m) => { setMode(m); setSetId(null); setDayIdx(null); }} />
-        {mode === "special" ? (
-          <SetPicker title="필기로 외울 특제 세트를 골라 주세요." learned={learned}
+        {group ? (
+          <SetPicker sets={group}
+            title={mode === "special" ? "필기로 외울 특제 세트를 골라 주세요." : "레벨을 골라 주세요. 기본부터 차근차근!"}
+            learned={learned}
             onPick={(id) => { setSetId(id); setIdx(0); setJustGot(false); }} />
         ) : (
           <LibDayGrid days={dayList} learned={learned} onPick={(i) => { setDayIdx(i); setIdx(0); setJustGot(false); }} />
@@ -2192,7 +2231,7 @@ function WritingScreen({ learned, markLearned }) {
 
   const w = words[idx];
   const isLearned = !!learned[w.en];
-  const title = mode === "special" ? SETS.find((s) => s.id === setId).name + " 세트" : (mode === "biz" ? "IT 실무 2000" : mode === "grad" ? "대학원 IT·AI 3000" : mode === "pro" ? "대학·IT·AI 2500" : mode === "hs" ? "고등 4800" : "중학 1800") + " · Day " + (dayIdx + 1);
+  const title = group ? group.find((s) => s.id === setId).name + " 세트" : (mode === "biz" ? "IT 실무 2000" : mode === "grad" ? "대학원 IT·AI 3000" : mode === "pro" ? "대학·IT·AI 2500" : mode === "hs" ? "고등 4800" : "중학 1800") + " · Day " + (dayIdx + 1);
   const goBack = () => { setSetId(null); setDayIdx(null); setIdx(0); setJustGot(false); };
   const go = (d) => { setJustGot(false); setIdx((i) => (i + d + words.length) % words.length); };
 
