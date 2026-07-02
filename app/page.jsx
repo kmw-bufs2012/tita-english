@@ -1330,7 +1330,7 @@ const BRAIN_SETS = [
   },
 ];
 
-const SET_GROUPS = { special: SETS, adhd: ADHD_SETS, brain: BRAIN_SETS };
+const SET_GROUPS = { special: SETS, mind: [...ADHD_SETS, ...BRAIN_SETS] };
 
 /* ───────── 중학 영단어 1800 (Day당 20개) ───────── */
 const WORD_LIB =
@@ -1677,8 +1677,7 @@ function ModeTabs({ mode, setMode }) {
     { id: "lib", label: "중학 1800" },
     { id: "hs", label: "고등 4800" },
     { id: "special", label: "특제 1000" },
-    { id: "adhd", label: "ADHD" },
-    { id: "brain", label: "뇌병증" },
+    { id: "mind", label: "신경·마음" },
     { id: "pro", label: "대학·IT·AI 2500" },
     { id: "grad", label: "대학원 IT·AI 3000" },
     { id: "biz", label: "IT 실무 2000" },
