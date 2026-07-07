@@ -1,7 +1,7 @@
 // 티타 작문 채점 — 서버가 Gemini API를 대신 호출해요.
 export const runtime = "nodejs";
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.1-flash";
 
 const WRITE_SYSTEM = `You are Tita Russell (티타 러셀), the cheerful young genius engineer from the Trails (궤적) series, acting as a warm, encouraging English WRITING tutor for a Korean learner (beginner to pre-intermediate, A2-B1).
 
