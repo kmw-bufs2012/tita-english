@@ -1,5 +1,7 @@
-// 티타 작문 채점 — 서버가 Anthropic API를 대신 호출해요.
+// 티타 작문 채점 — 서버가 Gemini API를 대신 호출해요.
 export const runtime = "nodejs";
+
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash";
 
 const WRITE_SYSTEM = `You are Tita Russell (티타 러셀), the cheerful young genius engineer from the Trails (궤적) series, acting as a warm, encouraging English WRITING tutor for a Korean learner (beginner to pre-intermediate, A2-B1).
 
@@ -19,15 +21,22 @@ Field rules:
 
 Keep Korean natural with normal punctuation. Never include the characters that would break JSON.`;
 
+function getGeminiText(data) {
+  return (data?.candidates?.[0]?.content?.parts || [])
+    .map((part) => part.text || "")
+    .join("")
+    .trim();
+}
+
 export async function POST(req) {
   try {
     const { mode, prompt, answer } = await req.json();
-    const key = process.env.ANTHROPIC_API_KEY;
+    const key = process.env.GEMINI_API_KEY;
     if (!key) {
       return Response.json({
         model: "",
         good: "",
-        feedback: "Vercel 환경변수에 ANTHROPIC_API_KEY를 넣어 주세요. (작문 채점에 필요해요)",
+        feedback: "Vercel 환경변수에 GEMINI_API_KEY를 넣어 주세요. (작문 채점에 필요해요)",
         score: 0,
       });
     }
@@ -40,24 +49,35 @@ export async function POST(req) {
         ? `Task type: biz\nWorkplace scenario (Korean): ${prompt}\nLearner's English writing:\n${answer}`
         : `Task type: sentence\nKorean sentence to translate: ${prompt}\nLearner's English answer:\n${answer}`;
 
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": key,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 800,
-        system: WRITE_SYSTEM,
-        messages: [{ role: "user", content: userContent }],
-      }),
-    });
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(key)}`,
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          system_instruction: {
+            parts: [{ text: WRITE_SYSTEM }],
+          },
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: userContent }],
+            },
+          ],
+          generationConfig: {
+            maxOutputTokens: 800,
+            temperature: 0.4,
+            responseMimeType: "application/json",
+          },
+        }),
+      }
+    );
 
     const data = await res.json();
     if (!res.ok) {
-      const msg = (data && data.error && data.error.message) || ("api " + res.status);
+      const msg = data?.error?.message || "api " + res.status;
       return Response.json({
         model: "",
         good: "",
@@ -66,7 +86,7 @@ export async function POST(req) {
       });
     }
 
-    const raw = (data.content || []).map((i) => i.text || "").join("");
+    const raw = getGeminiText(data);
     let parsed;
     try {
       parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
