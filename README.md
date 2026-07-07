@@ -46,7 +46,7 @@
    선택 환경변수:
    | 이름 | 값 |
    |---|---|
-   | `GEMINI_MODEL` | 기본값은 `gemini-2.5-flash-lite`. 더 좋은 품질이 필요할 때만 다른 모델명으로 바꿔요 |
+   | `GEMINI_MODEL` | 기본값은 `gemini-3.1-flash`. 다른 모델을 쓰고 싶을 때만 모델명으로 바꿔요 |
 
 4. **Deploy** 클릭 → 끝나면 나오는 주소로 접속!
 
@@ -62,7 +62,7 @@ npm run dev      # http://localhost:3000
 
 ```bash
 GEMINI_API_KEY=여기에_제미나이_API_키
-GEMINI_MODEL=gemini-2.5-flash-lite
+GEMINI_MODEL=gemini-3.1-flash
 ELEVENLABS_API_KEY=여기에_ElevenLabs_API_키
 ELEVENLABS_VOICE_ID=여기에_보이스_ID
 AUTH_USER=tita
@@ -91,7 +91,7 @@ AUTH_SECRET=랜덤_32자_이상_문자열
 ## 주의
 
 - Gemini API 키를 넣지 않으면 회화·작문 채점·연상법 생성 기능이 작동하지 않아요
-- 기본 Gemini 모델은 가성비 우선으로 `gemini-2.5-flash-lite`를 사용해요
+- 기본 Gemini 모델은 `gemini-3.1-flash`를 사용해요
 - ElevenLabs는 **유료 Starter(월 $5)부터 API 사용 가능** (무료 플랜은 401 오류)
 - 키를 나중에 수정하면: Vercel → 프로젝트 → Settings → Environment Variables 수정 → Deployments에서 Redeploy
 - 키는 서버에만 저장되고 코드/브라우저에 노출되지 않아요
