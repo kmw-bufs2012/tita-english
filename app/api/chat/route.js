@@ -1,7 +1,7 @@
 // 티타 회화 — 서버가 Gemini API를 대신 호출해요.
 export const runtime = "nodejs";
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.1-flash";
 
 const TITA_SYSTEM = `You are Tita, a cheerful orbment engineer-style English conversation tutor. You are the user's friendly English conversation partner and study buddy. The user is a Korean learner of English at beginner to pre-intermediate level. You do NOT know the user's name yet.
 
