@@ -1,5 +1,7 @@
-// AI 연상법 생성 창구 — 아주 쉽고 짧은 한 줄 연상법을 만들어 줘요.
+// AI 연상법 생성 창구 — Gemini가 아주 쉽고 짧은 한 줄 연상법을 만들어 줘요.
 export const runtime = "nodejs";
+
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash";
 
 const MN_SYSTEM = `You create super simple Korean mnemonics (연상법) for English words. The learner is a Korean adult with ADHD who prefers very easy language (middle-school level Korean).
 
@@ -17,38 +19,56 @@ Good examples (follow this style):
 
 Respond ONLY with raw JSON, no markdown: {"mn": "연상법 한 문장"}`;
 
+function getGeminiText(data) {
+  return (data?.candidates?.[0]?.content?.parts || [])
+    .map((part) => part.text || "")
+    .join("")
+    .trim();
+}
+
 export async function POST(req) {
   try {
     const { word, meaning } = await req.json();
     if (!word || !meaning) return Response.json({ mn: null, error: "단어/뜻 누락" }, { status: 400 });
 
-    const key = process.env.ANTHROPIC_API_KEY;
+    const key = process.env.GEMINI_API_KEY;
     if (!key) {
-      return Response.json({ mn: null, error: "Vercel 환경변수 ANTHROPIC_API_KEY가 필요해요" });
+      return Response.json({ mn: null, error: "Vercel 환경변수 GEMINI_API_KEY가 필요해요" });
     }
 
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": key,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 200,
-        system: MN_SYSTEM,
-        messages: [{ role: "user", content: "단어: " + word + " / 뜻: " + meaning }],
-      }),
-    });
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(key)}`,
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          system_instruction: {
+            parts: [{ text: MN_SYSTEM }],
+          },
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: "단어: " + word + " / 뜻: " + meaning }],
+            },
+          ],
+          generationConfig: {
+            maxOutputTokens: 200,
+            temperature: 0.7,
+            responseMimeType: "application/json",
+          },
+        }),
+      }
+    );
 
     const data = await res.json();
     if (!res.ok) {
-      const msg = (data && data.error && data.error.message) || ("api " + res.status);
+      const msg = data?.error?.message || "api " + res.status;
       return Response.json({ mn: null, error: String(msg).slice(0, 120) });
     }
 
-    const raw = (data.content || []).map((i) => i.text || "").join("");
+    const raw = getGeminiText(data);
     try {
       const parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
       return Response.json({ mn: parsed.mn || raw });
