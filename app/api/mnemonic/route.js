@@ -1,7 +1,7 @@
 // AI 연상법 생성 창구 — Gemini가 아주 쉽고 짧은 한 줄 연상법을 만들어 줘요.
 export const runtime = "nodejs";
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash";
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
 
 const MN_SYSTEM = `You create super simple Korean mnemonics (연상법) for English words. The learner is a Korean adult with ADHD who prefers very easy language (middle-school level Korean).
 
