@@ -8859,6 +8859,30 @@ const GRAMMAR_LEVELS = [
   { id: "gr", label: "대학원", tint: C.ink, intro: "대학원·학술 영어 문법! 명사화·헤징·분열문·학술 시제까지 논문 영어의 핵심을 정비해요." },
 ];
 
+/* ───────── 대학·대학원 과정 주간 플랜 (성인 ADHD 친화형) ─────────
+   - "N일 연속" 스트릭 대신 "주 목표 + 여유일"로 설계 → 하루 빠져도 그 주 안에 회복.
+   - 요일을 정하지 않음(요일 강제 = 실패감). 잘 되는 날 몰아치기 허용.
+   - perWeek: 한 주 학습 목표 개수 / bufferPerWeek: 그 주에 내장된 여유일 수. */
+const GRAMMAR_COURSE_PLANS = {
+  co: { perWeek: 4, bufferPerWeek: 3, cadence: "주 4개 목표 · 여유일 3일" },
+  gr: { perWeek: 3, bufferPerWeek: 4, cadence: "주 3개 목표 · 여유일 4일" },
+};
+
+/* 주제 배열을 주(週) 단위로 쪼개고, 미니/전체 복습 지점을 표시. */
+function buildGrammarWeeks(topics, perWeek) {
+  const weeks = [];
+  for (let i = 0; i < topics.length; i += perWeek) {
+    weeks.push({ num: weeks.length + 1, startIdx: i, topics: topics.slice(i, i + perWeek) });
+  }
+  const last = weeks.length;
+  return weeks.map((w) => ({
+    ...w,
+    // 3주마다 미니 복습(단, 마지막 주는 전체 복습으로 대체)
+    miniReview: w.num % 3 === 0 && w.num !== last,
+    fullReview: w.num === last,
+  }));
+}
+
 function uniqueItems(items) {
   return [...new Set(items.filter(Boolean))];
 }
@@ -9116,6 +9140,23 @@ function GrammarScreen() {
 
   if (topic) return <GrammarLesson topic={topic} topics={topics} tint={level.tint} onBack={() => setTopicId(null)} />;
 
+  const plan = GRAMMAR_COURSE_PLANS[lvl];
+  const weeks = plan ? buildGrammarWeeks(topics, plan.perWeek) : null;
+
+  // 주제 카드 (플랜/일반 목록 공용). n = 화면에 보일 순번(1부터).
+  const topicCard = (t, n) => (
+    <button key={t.id} onClick={() => setTopicId(t.id)}
+      className="text-left rounded-2xl p-4 press w-full"
+      style={{ background: C.card, border: "2px solid " + C.copperSoft, boxShadow: "0 2px 0 rgba(70,49,37,0.08)" }}>
+      <div className="flex items-center gap-2">
+        <span className="rounded-lg px-2 py-1 text-xs font-bold shrink-0" style={{ background: C.paper, border: "1px solid " + level.tint, color: level.tint }}>{n}</span>
+        <span className="font-bold text-sm" style={{ color: C.ink }}>{t.title}</span>
+        <ChevronRight size={18} className="ml-auto shrink-0" style={{ color: C.inkSoft }} />
+      </div>
+      <p className="text-xs mt-1 leading-relaxed" style={{ color: C.inkSoft }}>{t.summary}</p>
+    </button>
+  );
+
   return (
     <div className="flex flex-col gap-3">
       <div className="grid grid-cols-5 gap-2">
@@ -9128,19 +9169,40 @@ function GrammarScreen() {
         ))}
       </div>
       <TitaSays mood="happy">{level.intro}</TitaSays>
-      <p className="text-xs px-1" style={{ color: C.inkSoft }}>총 {topics.length}개 단원{!["co", "gr"].includes(lvl) && " · 2022 개정 교육과정 기준"}</p>
-      {topics.map((t, i) => (
-        <button key={t.id} onClick={() => setTopicId(t.id)}
-          className="text-left rounded-2xl p-4 press"
-          style={{ background: C.card, border: "2px solid " + C.copperSoft, boxShadow: "0 2px 0 rgba(70,49,37,0.08)" }}>
-          <div className="flex items-center gap-2">
-            <span className="rounded-lg px-2 py-1 text-xs font-bold shrink-0" style={{ background: C.paper, border: "1px solid " + level.tint, color: level.tint }}>{i + 1}</span>
-            <span className="font-bold text-sm" style={{ color: C.ink }}>{t.title}</span>
-            <ChevronRight size={18} className="ml-auto shrink-0" style={{ color: C.inkSoft }} />
+
+      {weeks ? (
+        <>
+          <p className="text-xs px-1" style={{ color: C.inkSoft }}>총 {topics.length}개 단원 · {weeks.length}주 과정 · {plan.cadence}</p>
+          {/* ADHD 친화 설계 안내 */}
+          <div className="rounded-2xl p-3 text-xs leading-relaxed"
+            style={{ background: C.pinkSoft, border: "1px solid " + C.pink, color: C.pinkDeep }}>
+            <span className="font-bold">성인 ADHD 맞춤 진도</span> · <b>요일은 정하지 않아요.</b> 이번 주 목표 개수만 채우면 돼요.
+            여유일이 들어 있어 하루 빠져도 그 주 안에 회복돼요. 컨디션 좋은 날은 몰아서 해도 좋아요. 한 단원은 10~15분이면 충분해요.
           </div>
-          <p className="text-xs mt-1 leading-relaxed" style={{ color: C.inkSoft }}>{t.summary}</p>
-        </button>
-      ))}
+          {weeks.map((w) => (
+            <div key={w.num} className="rounded-2xl p-3 flex flex-col gap-2"
+              style={{ background: C.paper, border: "2px solid " + level.tint }}>
+              <div className="flex items-center gap-2">
+                <span className="rounded-lg px-2.5 py-1 text-xs font-bold text-white shrink-0" style={{ background: level.tint }}>{w.num}주차</span>
+                <span className="text-xs font-bold" style={{ color: C.ink }}>{w.topics.length}개 목표</span>
+                <span className="ml-auto text-xs" style={{ color: C.inkSoft }}>여유일 {plan.bufferPerWeek}일</span>
+              </div>
+              {w.topics.map((t, j) => topicCard(t, w.startIdx + j + 1))}
+              {w.miniReview && (
+                <p className="text-xs px-1" style={{ color: C.inkSoft }}>💡 여기까지 왔다면 지난 단원 핵심만 가볍게 훑어보고 넘어가요.</p>
+              )}
+              {w.fullReview && (
+                <p className="text-xs px-1 font-bold" style={{ color: level.tint }}>🎓 마지막 주차예요! 남은 단원 마무리 후 전체 복습으로 과정을 완성해요.</p>
+              )}
+            </div>
+          ))}
+        </>
+      ) : (
+        <>
+          <p className="text-xs px-1" style={{ color: C.inkSoft }}>총 {topics.length}개 단원 · 2022 개정 교육과정 기준</p>
+          {topics.map((t, i) => topicCard(t, i + 1))}
+        </>
+      )}
     </div>
   );
 }
