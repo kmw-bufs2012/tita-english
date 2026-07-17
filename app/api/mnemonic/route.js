@@ -1,7 +1,7 @@
-// AI 연상법 생성 창구 — Gemini가 아주 쉽고 짧은 한 줄 연상법을 만들어 줘요.
+// AI 연상법 생성 창구 — DeepSeek가 아주 쉽고 짧은 한 줄 연상법을 만들어 줘요.
 export const runtime = "nodejs";
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.1-flash";
+const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash";
 
 const MN_SYSTEM = `You create super simple Korean mnemonics (연상법) for English words. The learner is a Korean adult with ADHD who prefers very easy language (middle-school level Korean).
 
@@ -19,11 +19,8 @@ Good examples (follow this style):
 
 Respond ONLY with raw JSON, no markdown: {"mn": "연상법 한 문장"}`;
 
-function getGeminiText(data) {
-  return (data?.candidates?.[0]?.content?.parts || [])
-    .map((part) => part.text || "")
-    .join("")
-    .trim();
+function getDeepSeekText(data) {
+  return (data?.choices?.[0]?.message?.content || "").trim();
 }
 
 export async function POST(req) {
@@ -31,36 +28,28 @@ export async function POST(req) {
     const { word, meaning } = await req.json();
     if (!word || !meaning) return Response.json({ mn: null, error: "단어/뜻 누락" }, { status: 400 });
 
-    const key = process.env.GEMINI_API_KEY;
+    const key = process.env.DEEPSEEK_API_KEY;
     if (!key) {
-      return Response.json({ mn: null, error: "Vercel 환경변수 GEMINI_API_KEY가 필요해요" });
+      return Response.json({ mn: null, error: "Vercel 환경변수 DEEPSEEK_API_KEY가 필요해요" });
     }
 
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(key)}`,
-      {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          system_instruction: {
-            parts: [{ text: MN_SYSTEM }],
-          },
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: "단어: " + word + " / 뜻: " + meaning }],
-            },
-          ],
-          generationConfig: {
-            maxOutputTokens: 200,
-            temperature: 0.7,
-            responseMimeType: "application/json",
-          },
-        }),
-      }
-    );
+    const res = await fetch("https://api.deepseek.com/chat/completions", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: "Bearer " + key,
+      },
+      body: JSON.stringify({
+        model: DEEPSEEK_MODEL,
+        messages: [
+          { role: "system", content: MN_SYSTEM },
+          { role: "user", content: "단어: " + word + " / 뜻: " + meaning },
+        ],
+        max_tokens: 200,
+        temperature: 0.7,
+        response_format: { type: "json_object" },
+      }),
+    });
 
     const data = await res.json();
     if (!res.ok) {
@@ -68,7 +57,7 @@ export async function POST(req) {
       return Response.json({ mn: null, error: String(msg).slice(0, 120) });
     }
 
-    const raw = getGeminiText(data);
+    const raw = getDeepSeekText(data);
     try {
       const parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
       return Response.json({ mn: parsed.mn || raw });
