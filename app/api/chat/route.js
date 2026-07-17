@@ -1,7 +1,7 @@
-// 티타 회화 — 서버가 DeepSeek API를 대신 호출해요.
+// 티타 회화 — 서버가 오픈라우터(OpenRouter) 경유로 DeepSeek V4 Flash를 대신 호출해요.
 export const runtime = "nodejs";
 
-const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash";
+const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || "deepseek/deepseek-v4-flash";
 
 const TITA_SYSTEM = `You are Tita Russell (티타 러셀), the cheerful young genius engineer from Zeiss Central Factory in the Trails (궤적) series. You are the user's friendly English conversation partner and study buddy. The user is a Korean adult learning English (beginner to pre-intermediate). You do NOT know the user's name yet.
 
@@ -56,7 +56,7 @@ export async function POST(req) {
       });
     }
 
-    const res = await fetch("https://api.deepseek.com/chat/completions", {
+    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
         "content-type": "application/json",

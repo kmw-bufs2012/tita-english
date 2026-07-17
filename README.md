@@ -38,7 +38,7 @@
    |---|---|
    | `ELEVENLABS_API_KEY` | ElevenLabs API 키 (sk_...) |
    | `ELEVENLABS_VOICE_ID` | My Voices → Tita의 ID (영문+숫자) |
-   | `DEEPSEEK_API_KEY` | platform.deepseek.com에서 발급한 DeepSeek API 키 (sk-...) |
+   | `DEEPSEEK_API_KEY` | openrouter.ai에서 발급한 오픈라우터 API 키 (sk-or-v1-...) — DeepSeek V4 Flash를 오픈라우터 경유로 호출해요 |
    | `AUTH_USER` | **로그인 아이디** (예: `tita`) — 본인만 알아두기 |
    | `AUTH_PASSWORD` | **로그인 비밀번호** (충분히 길고 복잡하게) |
    | `AUTH_SECRET` | 세션 서명용 비밀키 (랜덤 32+자, 예: `openssl rand -hex 32` 결과) |
@@ -46,7 +46,7 @@
    선택 환경변수:
    | 이름 | 값 |
    |---|---|
-   | `DEEPSEEK_MODEL` | 기본값은 `deepseek-v4-flash`. 다른 모델을 쓰고 싶을 때만 모델명으로 바꿔요 |
+   | `DEEPSEEK_MODEL` | 기본값은 `deepseek/deepseek-v4-flash`(오픈라우터 모델 슬러그). 다른 모델을 쓰고 싶을 때만 바꿔요 |
 
 4. **Deploy** 클릭 → 끝나면 나오는 주소로 접속!
 
@@ -61,8 +61,8 @@ npm run dev      # http://localhost:3000
 예시:
 
 ```bash
-DEEPSEEK_API_KEY=여기에_딥시크_API_키
-DEEPSEEK_MODEL=deepseek-v4-flash
+DEEPSEEK_API_KEY=여기에_오픈라우터_API_키
+DEEPSEEK_MODEL=deepseek/deepseek-v4-flash
 ELEVENLABS_API_KEY=여기에_ElevenLabs_API_키
 ELEVENLABS_VOICE_ID=여기에_보이스_ID
 AUTH_USER=tita
@@ -91,7 +91,7 @@ AUTH_SECRET=랜덤_32자_이상_문자열
 ## 주의
 
 - DeepSeek API 키를 넣지 않으면 회화·작문 채점·연상법 생성 기능이 작동하지 않아요
-- 기본 DeepSeek 모델은 `deepseek-v4-flash`를 사용해요
+- 기본 DeepSeek 모델은 오픈라우터 경유 `deepseek/deepseek-v4-flash`를 사용해요
 - ElevenLabs는 **유료 Starter(월 $5)부터 API 사용 가능** (무료 플랜은 401 오류)
 - 키를 나중에 수정하면: Vercel → 프로젝트 → Settings → Environment Variables 수정 → Deployments에서 Redeploy
 - 키는 서버에만 저장되고 코드/브라우저에 노출되지 않아요

@@ -1,7 +1,7 @@
-// 티타 작문 채점 — 서버가 DeepSeek API를 대신 호출해요.
+// 티타 작문 채점 — 서버가 오픈라우터(OpenRouter) 경유로 DeepSeek V4 Flash를 대신 호출해요.
 export const runtime = "nodejs";
 
-const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash";
+const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || "deepseek/deepseek-v4-flash";
 
 const WRITE_SYSTEM = `You are Tita Russell (티타 러셀), the cheerful young genius engineer from the Trails (궤적) series, acting as a warm, encouraging English WRITING tutor for a Korean learner (beginner to pre-intermediate, A2-B1).
 
@@ -46,7 +46,7 @@ export async function POST(req) {
         ? `Task type: biz\nWorkplace scenario (Korean): ${prompt}\nLearner's English writing:\n${answer}`
         : `Task type: sentence\nKorean sentence to translate: ${prompt}\nLearner's English answer:\n${answer}`;
 
-    const res = await fetch("https://api.deepseek.com/chat/completions", {
+    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
         "content-type": "application/json",

@@ -1,7 +1,7 @@
-// AI 연상법 생성 창구 — DeepSeek가 아주 쉽고 짧은 한 줄 연상법을 만들어 줘요.
+// AI 연상법 생성 창구 — 오픈라우터(OpenRouter) 경유로 DeepSeek V4 Flash가 짧은 한 줄 연상법을 만들어 줘요.
 export const runtime = "nodejs";
 
-const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash";
+const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || "deepseek/deepseek-v4-flash";
 
 const MN_SYSTEM = `You create super simple Korean mnemonics (연상법) for English words. The learner is a Korean adult with ADHD who prefers very easy language (middle-school level Korean).
 
@@ -33,7 +33,7 @@ export async function POST(req) {
       return Response.json({ mn: null, error: "Vercel 환경변수 DEEPSEEK_API_KEY가 필요해요" });
     }
 
-    const res = await fetch("https://api.deepseek.com/chat/completions", {
+    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
         "content-type": "application/json",
