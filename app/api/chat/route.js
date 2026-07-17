@@ -1,7 +1,7 @@
-// 티타 회화 — 서버가 Gemini API를 대신 호출해요.
+// 티타 회화 — 서버가 오픈라우터(OpenRouter) 경유로 DeepSeek V4 Flash를 대신 호출해요.
 export const runtime = "nodejs";
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.1-flash";
+const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || "deepseek/deepseek-v4-flash";
 
 const TITA_SYSTEM = `You are Tita Russell (티타 러셀), the cheerful young genius engineer from Zeiss Central Factory in the Trails (궤적) series. You are the user's friendly English conversation partner and study buddy. The user is a Korean adult learning English (beginner to pre-intermediate). You do NOT know the user's name yet.
 
@@ -20,65 +20,56 @@ Conversation style:
 Respond ONLY with raw JSON, no markdown, no code fences:
 {"english": "your reply in simple English", "korean": "위 영어 문장의 자연스러운 한국어 번역", "tip": "한국어 교정 팁 또는 null"}`;
 
-function toGeminiContent(message) {
+function toDeepSeekMessage(message) {
   const text = typeof message?.content === "string" ? message.content.trim() : "";
   if (!text) return null;
 
   return {
-    role: message.role === "assistant" || message.role === "model" ? "model" : "user",
-    parts: [{ text }],
+    role: message.role === "assistant" || message.role === "model" ? "assistant" : "user",
+    content: text,
   };
 }
 
-function getGeminiText(data) {
-  return (data?.candidates?.[0]?.content?.parts || [])
-    .map((part) => part.text || "")
-    .join("")
-    .trim();
+function getDeepSeekText(data) {
+  return (data?.choices?.[0]?.message?.content || "").trim();
 }
 
 export async function POST(req) {
   try {
     const { messages } = await req.json();
-    const key = process.env.GEMINI_API_KEY;
+    const key = process.env.DEEPSEEK_API_KEY;
     if (!key) {
       return Response.json({
         english: "My talking orbment needs a key!",
-        korean: "Vercel 환경변수에 GEMINI_API_KEY를 넣어 주세요. (회화 기능에 필요해요)",
+        korean: "Vercel 환경변수에 DEEPSEEK_API_KEY를 넣어 주세요. (회화 기능에 필요해요)",
         tip: null,
       });
     }
 
     const userMessages = Array.isArray(messages) ? messages.slice(-30) : [];
-    const contents = userMessages.map(toGeminiContent).filter(Boolean);
+    const chatMessages = userMessages.map(toDeepSeekMessage).filter(Boolean);
 
-    if (contents.length === 0 || contents[contents.length - 1].role !== "user") {
-      contents.push({
+    if (chatMessages.length === 0 || chatMessages[chatMessages.length - 1].role !== "user") {
+      chatMessages.push({
         role: "user",
-        parts: [{ text: "Please start the conversation in simple English." }],
+        content: "Please start the conversation in simple English.",
       });
     }
 
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(key)}`,
-      {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          system_instruction: {
-            parts: [{ text: TITA_SYSTEM }],
-          },
-          contents,
-          generationConfig: {
-            maxOutputTokens: 1000,
-            temperature: 0.8,
-            responseMimeType: "application/json",
-          },
-        }),
-      }
-    );
+    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: "Bearer " + key,
+      },
+      body: JSON.stringify({
+        model: DEEPSEEK_MODEL,
+        messages: [{ role: "system", content: TITA_SYSTEM }, ...chatMessages],
+        max_tokens: 1000,
+        temperature: 0.8,
+        response_format: { type: "json_object" },
+      }),
+    });
 
     const data = await res.json();
     if (!res.ok) {
@@ -90,7 +81,7 @@ export async function POST(req) {
       });
     }
 
-    const raw = getGeminiText(data);
+    const raw = getDeepSeekText(data);
     let parsed;
     try {
       parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
