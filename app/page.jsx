@@ -1935,13 +1935,17 @@ function QuizScreen({ learned, addXp }) {
   const startPool = (pool) => {
     const chosen = shuffle(pool).slice(0, 20);
     const built = chosen.map((w) => {
-      // 오답은 정답 뜻과 헷갈리는 근접 뜻으로 (전체 랜덤 금지). 길이 유사 후보로 좁혀 비용도 절감.
+      // 초급 블렌드: 근접 오답 2 + 완만한(관련 있으나 덜 헷갈리는) 오답 1. 무관 랜덤 오답 금지.
       const correctKo = w.ko;
       const pool = QUIZ_POOL.filter((x) => x.en !== w.en && x.ko !== w.ko).map((x) => x.ko);
       let cand = pool.filter((k) => Math.abs(k.length - correctKo.length) <= 3);
       if (cand.length < 12) cand = pool;
-      let wrong = nearbyWrong(correctKo, shuffle(cand), 3);
-      if (wrong.length < 3) wrong = shuffle(pool).slice(0, 3); // 안전망
+      const ranked = nearbyWrong(correctKo, shuffle(cand), 30); // 유사도 내림차순
+      const near = ranked.slice(0, 2);                          // 가장 헷갈리는 2개
+      const rest = ranked.slice(2);
+      const mild = rest.length ? rest[Math.floor(rest.length * 0.6)] : null; // 관련은 있으나 덜 헷갈리는 1개
+      let wrong = [...near, mild].filter(Boolean);
+      if (wrong.length < 3) wrong = wrong.concat(shuffle(pool).filter((k) => !wrong.includes(k))).slice(0, 3); // 안전망
       return { w, choices: shuffle([correctKo, ...wrong]) };
     });
     setQs(built); setQi(0); setScore(0); setPicked(null); setMsg(""); setWrongList([]); setPhase("play");
