@@ -1705,9 +1705,7 @@ function HomeScreen({ xp, learnedCount, go, greeting }) {
         {[
           { key: "cards", Icon: BookOpen, tint: C.copper, title: "단어 카드", sub: "취업 로드맵 2,550단어 · Java 입문/중학/IT 기초/IT 심화/IT 실무" },
           { key: "quiz", Icon: Brain, tint: C.teal, title: "조립 퀴즈", sub: "20문제로 빠르게! 즉시 채점" },
-          { key: "grammar", Icon: GraduationCap, tint: C.brass, title: "영어 문법", sub: "100일 완성 · 중학·고등·수능 (+대학·대학원)" },
-          { key: "compose", Icon: FileText, tint: C.teal, title: "작문 연습", sub: "문장 영작·자유 작문 · 티타 AI 채점" },
-          { key: "chat", Icon: MessageCircle, tint: C.pinkDeep, title: "티타와 회화", sub: "쉬운 영어로 대화 연습 (AI)" },
+          { key: "grammar", Icon: GraduationCap, tint: C.brass, title: "영어 문법", sub: "중학 문법 40유닛 · 하루 한 유닛(10~15분)" },
         ].map(({ key, Icon, tint, title, sub }) => (
           <button key={key} onClick={() => go(key)}
             className="flex items-center gap-3 rounded-2xl p-4 text-left press"
@@ -9210,11 +9208,8 @@ function ChatScreen() {
 
 /* ───────── 영어 문법 화면 (중학·고등·수능) ───────── */
 const GRAMMAR_LEVELS = [
-  { id: "ms", label: "중학", tint: C.teal, dayBase: 0, intro: "100일 완성 · 1단계 중학 문법 (Day 1~40)! 하루 한 유닛씩, be동사부터 5형식까지 기초를 탄탄하게 다져요." },
-  { id: "hs", label: "고등", tint: C.copper, dayBase: 40, intro: "100일 완성 · 2단계 고등 문법 (Day 41~70)! 완료시제·가정법·분사구문·도치까지 한 단계 깊이 들어가요." },
-  { id: "sn", label: "수능", tint: C.pinkDeep, dayBase: 70, intro: "100일 완성 · 3단계 수능 어법 (Day 71~100)! 빈출 25유형을 익히고 Day 96~100 종합 모의고사로 마무리해요." },
-  { id: "co", label: "대학", tint: C.brass, intro: "대학 영어 문법! 학술 글 읽기·에세이 쓰기·전문 영어에 필요한 고급 문법을 다져요." },
-  { id: "gr", label: "대학원", tint: C.ink, intro: "대학원·학술 영어 문법! 명사화·헤징·분열문·학술 시제까지 논문 영어의 핵심을 정비해요." },
+  { id: "ms", label: "중학", tint: C.teal, dayBase: 0, intro: "중학 문법 40유닛! be동사부터 5형식까지, 영어 문서·에러 메시지를 읽는 데 딱 필요한 기초만 하루 한 유닛씩 다져요. 순서는 자유예요." },
+  // 고등·수능·대학·대학원 레벨은 메뉴에서 제거(취업 로드맵 개편). 데이터(GRAMMAR 객체·HIGH_GRAMMAR·CSAT_GRAMMAR)는 보존.
 ];
 
 /* ───────── 대학·대학원 과정 주간 플랜 (성인 ADHD 친화형) ─────────
@@ -9353,7 +9348,7 @@ function Collapsible({ icon, label, accent, count, defaultOpen = false, children
 }
 
 /* 확인 문제 — 한 번에 한 문제씩만 풀어 집중력 부담을 줄여요 */
-function GrammarQuiz({ quiz, tint }) {
+function GrammarQuiz({ quiz, tint, onFinish }) {
   const [idx, setIdx] = useState(0);
   const [chosen, setChosen] = useState(null);
   const [score, setScore] = useState(0);
@@ -9377,7 +9372,7 @@ function GrammarQuiz({ quiz, tint }) {
   const isLast = idx === quiz.length - 1;
   const next = () => {
     if (chosen === qz.answer) setScore((s) => s + 1);
-    if (isLast) setDone(true);
+    if (isLast) { setDone(true); if (onFinish) onFinish(); } // 확인문제 끝까지 풀면 유닛 완료
     else { setIdx((i) => i + 1); setChosen(null); }
   };
 
@@ -9421,13 +9416,15 @@ function GrammarQuiz({ quiz, tint }) {
   );
 }
 
-function GrammarLesson({ topic, topics, tint, onBack }) {
+function GrammarLesson({ topic, topics, tint, onBack, onComplete, isDone }) {
   const quiz = buildGrammarQuiz(topic, topics);
+  const [justDone, setJustDone] = useState(false);
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
         <button onClick={onBack} className="p-1 rounded-lg press" style={{ color: C.copper }}><ChevronLeft size={22} /></button>
         <h2 className="font-bold text-base" style={{ color: C.ink, fontFamily: "'Jua', sans-serif" }}>{topic.title}</h2>
+        {(isDone || justDone) && <span className="rounded-md px-1.5 py-0.5 text-[10px] font-bold text-white shrink-0" style={{ background: C.teal }}>✓ 완료</span>}
       </div>
 
       {/* 딱 이거 하나만! — 한 줄 핵심 */}
@@ -9483,102 +9480,108 @@ function GrammarLesson({ topic, topics, tint, onBack }) {
       </Collapsible>
 
       {quiz.length > 0 && (
-        <Collapsible icon={<Brain size={16} />} label="확인 문제" accent={C.pinkDeep} count={quiz.length}>
-          <GrammarQuiz quiz={quiz} tint={tint} />
+        <Collapsible icon={<Brain size={16} />} label="확인 문제" accent={C.pinkDeep} count={quiz.length} defaultOpen>
+          <GrammarQuiz quiz={quiz} tint={tint} onFinish={() => { setJustDone(true); if (onComplete) onComplete(); }} />
         </Collapsible>
+      )}
+      {justDone && (
+        <p className="text-center text-sm font-bold pop" style={{ color: C.teal }}>
+          <Sparkles size={14} className="inline mr-1" />한 유닛 완료! 정말 잘하셨어요 ✨
+        </p>
       )}
     </div>
   );
 }
 
-function GrammarScreen() {
-  const [lvl, setLvl] = useState("ms");
+function GrammarScreen({ grammar, onComplete, setLast }) {
+  const level = GRAMMAR_LEVELS[0];
   const [topicId, setTopicId] = useState(null);
-  const level = GRAMMAR_LEVELS.find((l) => l.id === lvl);
-  const topics = GRAMMAR[lvl] || [];
+  const topics = GRAMMAR[level.id] || [];
+  const done = (grammar && grammar.done) || {};
+  const dayBase = level.dayBase || 0;
+
+  const openTopic = (id) => { setTopicId(id); if (setLast) setLast(id); };
   const topic = topicId ? topics.find((t) => t.id === topicId) : null;
 
-  if (topic) return <GrammarLesson topic={topic} topics={topics} tint={level.tint} onBack={() => setTopicId(null)} />;
-
-  const plan = GRAMMAR_COURSE_PLANS[lvl];
-  const weeks = plan ? buildGrammarWeeks(topics, plan.perWeek) : null;
-
-  // 주제 카드 (플랜/일반 목록 공용). badge = 배지에 표시할 내용(순번 또는 "Day N").
-  const topicCard = (t, badge) => (
-    <button key={t.id} onClick={() => setTopicId(t.id)}
-      className="text-left rounded-2xl p-4 press w-full"
-      style={{ background: C.card, border: "2px solid " + C.copperSoft, boxShadow: "0 2px 0 rgba(70,49,37,0.08)" }}>
-      <div className="flex items-center gap-2">
-        <span className="rounded-lg px-2 py-1 text-xs font-bold shrink-0" style={{ background: C.paper, border: "1px solid " + level.tint, color: level.tint }}>{badge}</span>
-        <span className="font-bold text-sm" style={{ color: C.ink }}>{t.title}</span>
-        <ChevronRight size={18} className="ml-auto shrink-0" style={{ color: C.inkSoft }} />
-      </div>
-      <p className="text-xs mt-1 leading-relaxed" style={{ color: C.inkSoft }}>{t.summary}</p>
-    </button>
+  if (topic) return (
+    <GrammarLesson topic={topic} topics={topics} tint={level.tint}
+      isDone={!!done[topic.id]}
+      onComplete={() => onComplete && onComplete(topic.id)}
+      onBack={() => setTopicId(null)} />
   );
 
-  // 중학·고등·수능: 100일 완성 과정 → 유닛을 Day 번호로 표시
-  const dayBase = level.dayBase || 0;
-  const isCourse = typeof level.dayBase === "number";
+  const doneCount = topics.filter((t) => done[t.id]).length;
+  const pct = topics.length ? Math.round((doneCount / topics.length) * 100) : 0;
+  const nextUndone = topics.find((t) => !done[t.id]);
+  const lastTopic = grammar && grammar.last ? topics.find((t) => t.id === grammar.last) : null;
+
+  const topicCard = (t, badge) => {
+    const isDone = !!done[t.id];
+    return (
+      <button key={t.id} onClick={() => openTopic(t.id)}
+        className="text-left rounded-2xl p-4 press w-full"
+        style={{ background: isDone ? C.tealSoft : C.card, border: "2px solid " + (isDone ? C.teal : C.copperSoft), boxShadow: "0 2px 0 rgba(70,49,37,0.08)" }}>
+        <div className="flex items-center gap-2">
+          <span className="rounded-lg px-2 py-1 text-xs font-bold shrink-0" style={{ background: C.paper, border: "1px solid " + (isDone ? C.teal : level.tint), color: isDone ? C.teal : level.tint }}>{isDone ? "✓" : badge}</span>
+          <span className="font-bold text-sm" style={{ color: C.ink }}>{t.title}</span>
+          <ChevronRight size={18} className="ml-auto shrink-0" style={{ color: C.inkSoft }} />
+        </div>
+        <p className="text-xs mt-1 leading-relaxed" style={{ color: C.inkSoft }}>{t.summary}</p>
+      </button>
+    );
+  };
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="grid grid-cols-5 gap-2">
-        {GRAMMAR_LEVELS.map((l) => (
-          <button key={l.id} onClick={() => { setLvl(l.id); setTopicId(null); }}
-            className="rounded-xl py-2 font-bold press text-sm"
-            style={{ background: lvl === l.id ? l.tint : C.card, color: lvl === l.id ? "#fff" : C.inkSoft, border: "2px solid " + l.tint }}>
-            {l.label}
-          </button>
-        ))}
-      </div>
       <TitaSays mood="happy">{level.intro}</TitaSays>
 
-      {weeks ? (
-        <>
-          <p className="text-xs px-1" style={{ color: C.inkSoft }}>총 {topics.length}개 단원 · {weeks.length}주 과정 · {plan.cadence}</p>
-          {/* ADHD 친화 설계 안내 */}
-          <div className="rounded-2xl p-3 text-xs leading-relaxed"
-            style={{ background: C.pinkSoft, border: "1px solid " + C.pink, color: C.pinkDeep }}>
-            <span className="font-bold">성인 ADHD 맞춤 진도</span> · <b>요일은 정하지 않아요.</b> 이번 주 목표 개수만 채우면 돼요.
-            여유일이 들어 있어 하루 빠져도 그 주 안에 회복돼요. 컨디션 좋은 날은 몰아서 해도 좋아요. 한 단원은 10~15분이면 충분해요.
+      {/* 진행률 (성인 ADHD: 진척 가시화) */}
+      <div className="rounded-2xl p-3" style={{ background: C.card, border: "2px solid " + level.tint }}>
+        <div className="flex items-center gap-2 text-xs mb-1.5">
+          <span className="font-bold" style={{ color: level.tint }}>중학 문법 진행</span>
+          <span className="ml-auto font-bold" style={{ color: C.ink }}>{doneCount} / {topics.length} 완료 ({pct}%)</span>
+        </div>
+        <div className="h-2 rounded-full overflow-hidden" style={{ background: C.paper, border: "1px solid " + C.copperSoft }}>
+          <div className="h-full rounded-full" style={{ width: pct + "%", background: level.tint, transition: "width .3s" }} />
+        </div>
+      </div>
+
+      {/* 오늘의 문법 (결정 부담 제거: 딱 하나만) */}
+      {nextUndone ? (
+        <button onClick={() => openTopic(nextUndone.id)}
+          className="rounded-2xl p-4 text-left press" style={{ background: C.tealSoft, border: "2px solid " + C.teal }}>
+          <div className="flex items-center gap-1.5 mb-1">
+            <Target size={15} style={{ color: C.teal }} />
+            <span className="font-bold text-xs" style={{ color: C.teal }}>오늘의 문법 · 딱 이거 하나만!</span>
           </div>
-          {weeks.map((w) => (
-            <div key={w.num} className="rounded-2xl p-3 flex flex-col gap-2"
-              style={{ background: C.paper, border: "2px solid " + level.tint }}>
-              <div className="flex items-center gap-2">
-                <span className="rounded-lg px-2.5 py-1 text-xs font-bold text-white shrink-0" style={{ background: level.tint }}>{w.num}주차</span>
-                <span className="text-xs font-bold" style={{ color: C.ink }}>{w.topics.length}개 목표</span>
-                <span className="ml-auto text-xs" style={{ color: C.inkSoft }}>여유일 {plan.bufferPerWeek}일</span>
-              </div>
-              {w.topics.map((t, j) => topicCard(t, w.startIdx + j + 1))}
-              {w.miniReview && (
-                <p className="text-xs px-1" style={{ color: C.inkSoft }}>💡 여기까지 왔다면 지난 단원 핵심만 가볍게 훑어보고 넘어가요.</p>
-              )}
-              {w.fullReview && (
-                <p className="text-xs px-1 font-bold" style={{ color: level.tint }}>🎓 마지막 주차예요! 남은 단원 마무리 후 전체 복습으로 과정을 완성해요.</p>
-              )}
-            </div>
-          ))}
-        </>
-      ) : isCourse ? (
-        <>
-          <p className="text-xs px-1" style={{ color: C.inkSoft }}>총 {topics.length}개 단원 · Day {dayBase + 1}~{dayBase + topics.length} · 하루 한 유닛(10~15분)</p>
-          {topics.map((t) => topicCard(t, "Day " + (t.day ?? dayBase + topics.indexOf(t) + 1)))}
-        </>
+          <p className="text-sm font-bold" style={{ color: C.ink }}>{nextUndone.title}</p>
+          <p className="text-[11px] mt-0.5" style={{ color: C.inkSoft }}>10~15분이면 충분해요. 오늘은 이거 하나면 돼요!</p>
+        </button>
       ) : (
-        <>
-          <p className="text-xs px-1" style={{ color: C.inkSoft }}>총 {topics.length}개 단원 · 2022 개정 교육과정 기준</p>
-          {topics.map((t, i) => topicCard(t, i + 1))}
-        </>
+        <div className="rounded-2xl p-4" style={{ background: C.tealSoft, border: "2px solid " + C.teal }}>
+          <p className="text-sm font-bold" style={{ color: C.teal }}>🎉 40개 단원을 모두 끝냈어요!</p>
+          <p className="text-[11px] mt-0.5" style={{ color: C.inkSoft }}>이제 아무 단원이나 눌러 가볍게 복습해 보셔도 좋아요.</p>
+        </div>
       )}
+
+      {/* 이어서 하기 */}
+      {lastTopic && (!nextUndone || lastTopic.id !== nextUndone.id) && (
+        <button onClick={() => openTopic(lastTopic.id)}
+          className="rounded-xl py-2 px-3 text-left press text-xs font-bold"
+          style={{ background: C.card, border: "1px solid " + C.copperSoft, color: C.inkSoft }}>
+          ↩ 이어서 하기 — {lastTopic.title}
+        </button>
+      )}
+
+      <p className="text-xs px-1" style={{ color: C.inkSoft }}>총 {topics.length}개 단원 · 하루 한 유닛(10~15분) · 순서는 자유예요</p>
+      {topics.map((t, i) => topicCard(t, "Day " + (t.day ?? dayBase + i + 1)))}
     </div>
   );
 }
 
 /* ───────── 화면 ↔ 주소(URL) 매핑 ───────── */
 // 새로고침해도 현재 페이지가 유지되고, 페이지마다 고유 주소를 갖도록.
-const SCREEN_KEYS = ["home", "cards", "write", "quiz", "grammar", "compose", "chat"];
+const SCREEN_KEYS = ["home", "cards", "write", "quiz", "grammar"];
 const pathToScreen = (path) => {
   const seg = (path || "/").split("/")[1] || "home"; // "/quiz" → "quiz", "/" → "home"
   return SCREEN_KEYS.includes(seg) ? seg : "home";
@@ -9591,6 +9594,7 @@ export default function TitaEnglishWorkshop() {
   const [xp, setXp] = useState(0);
   const [learned, setLearned] = useState({});
   const [sr, setSr] = useState(srEmptyState());
+  const [grammar, setGrammar] = useState({ done: {}, last: null });
   const [greeting, setGreeting] = useState(GREETINGS[0]);
 
   // 진행도 + 설정 불러오기 (이 브라우저에 저장됨)
@@ -9612,6 +9616,10 @@ export default function TitaEnglishWorkshop() {
       const migrated = srMigrate(base, SR_DECK_UNITS, learnedNow, Date.now());
       setSr(migrated);
       localStorage.setItem("tita-sr-v1", JSON.stringify(migrated));
+    } catch (e) {}
+    try {
+      const gr = JSON.parse(localStorage.getItem("tita-grammar-v1") || "null");
+      if (gr) setGrammar({ done: gr.done || {}, last: gr.last || null });
     } catch (e) {}
     try {
       const v = localStorage.getItem("tita-voice-v1");
@@ -9646,6 +9654,18 @@ export default function TitaEnglishWorkshop() {
     try { localStorage.setItem("tita-english-v1", JSON.stringify({ xp: nxp, learned: nlearned })); } catch (e) {}
   };
   const persistSr = (n) => { try { localStorage.setItem("tita-sr-v1", JSON.stringify(n)); } catch (e) {} };
+  const persistGrammar = (g) => { try { localStorage.setItem("tita-grammar-v1", JSON.stringify(g)); } catch (e) {} };
+  // 문법 유닛 완료: done 저장 + 첫 완료 시에만 +10XP (재도전 시 XP 중복 방지)
+  const grammarComplete = (topicId) => {
+    const first = !grammar.done[topicId];
+    const ng = { done: { ...grammar.done, [topicId]: true }, last: topicId };
+    setGrammar(ng); persistGrammar(ng);
+    if (first) addXp(10);
+  };
+  const grammarSetLast = (topicId) => {
+    const ng = { done: grammar.done, last: topicId };
+    setGrammar(ng); persistGrammar(ng);
+  };
   // 신규 유닛 학습 완료: new → learned
   const srLearnUnit = (deck, unitId) => setSr((s) => { const n = completeLearn(s, deck, unitId, Date.now()); persistSr(n); return n; });
   // 복습 세션 완료: 단계 전진 + 정답률 기록 + known 등록
@@ -9661,7 +9681,7 @@ export default function TitaEnglishWorkshop() {
 
   const learnedCount = Object.keys(learned).length;
   const { cur } = levelInfo(xp);
-  const TITLES = { home: "티타의 영어 정비공방", cards: "단어 카드", write: "필기 노트", quiz: "조립 퀴즈", grammar: "영어 문법", compose: "작문 연습", chat: "티타와 회화" };
+  const TITLES = { home: "티타의 영어 정비공방", cards: "단어 카드", write: "필기 노트", quiz: "조립 퀴즈", grammar: "영어 문법" };
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: C.paper, fontFamily: "'Gowun Dodum', sans-serif" }}>
@@ -9709,22 +9729,18 @@ export default function TitaEnglishWorkshop() {
         {screen === "cards" && <CardsScreen learned={learned} markLearned={markLearned} sr={sr} srLearnUnit={srLearnUnit} srReviewUnit={srReviewUnit} />}
         {screen === "write" && <WritingScreen learned={learned} markLearned={markLearned} />}
         {screen === "quiz" && <QuizScreen learned={learned} addXp={addXp} />}
-        {screen === "grammar" && <GrammarScreen />}
-        {screen === "compose" && <ComposeScreen addXp={addXp} />}
-        {screen === "chat" && <div style={{ height: "70vh" }}><ChatScreen /></div>}
+        {screen === "grammar" && <GrammarScreen grammar={grammar} onComplete={grammarComplete} setLast={grammarSetLast} />}
       </main>
 
       {/* 하단 탭 */}
       <nav className="fixed bottom-0 left-0 right-0 z-10" style={{ background: C.card, borderTop: `2px solid ${C.copperSoft}` }}>
-        <div className="max-w-md mx-auto grid grid-cols-7">
+        <div className="max-w-md mx-auto grid grid-cols-5">
           {[
             { key: "home", Icon: Home, label: "홈" },
             { key: "cards", Icon: BookOpen, label: "단어" },
             { key: "write", Icon: Pencil, label: "필기" },
             { key: "quiz", Icon: Brain, label: "퀴즈" },
             { key: "grammar", Icon: GraduationCap, label: "문법" },
-            { key: "compose", Icon: FileText, label: "작문" },
-            { key: "chat", Icon: MessageCircle, label: "회화" },
           ].map(({ key, Icon, label }) => {
             const active = screen === key;
             return (
