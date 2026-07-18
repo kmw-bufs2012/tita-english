@@ -2,13 +2,14 @@
 // 이 모듈은 상태 객체(srState)를 입력받아 새 상태/계산 결과를 돌려줍니다.
 // 저장/로드는 page.jsx가 담당하고, 여기서는 규칙만 담습니다.
 //
-// SR 적용 덱: 중학(lib) · 고등(hs) · IT 실무(biz) · 파이썬(py)  ← 졸업 경로
-// 그 외(대학 pro · 대학원 grad · 특제 special · 마음+신경 mind)는 열람 전용(SR 미적용).
+// SR 적용 덱(취업 로드맵 학습 순서): Java 입문(java) → IT 기초(itb) → 중학(lib)
+// → IT 심화(ita) → IT 실무(itf). 중학을 기초 뒤로 미루는 이유: 에러·코드 어휘가
+// Java 기초 공부 시기에 먼저 필요하기 때문.
 //
 // 학습 단계:  new → learned → review1 → review2 → review3(졸업)
 // 복습 간격:  learned +1일 → 1차복습 / review1 +3일 → 2차복습 / review2 +7일 → 3차복습(최종)
 
-export const SR_DECKS = ["lib", "hs", "biz", "py"]; // 추천/졸업 경로 순서
+export const SR_DECKS = ["java", "itb", "lib", "ita", "itf"]; // 학습(SR)/졸업 경로 순서
 export const DAILY_CARD_CAP = 60;                   // 하루 총 카드(신규+복습) 상한
 export const GRAD_WINDOW = 3;                        // 졸업 판정에 보는 최근 복습 세션 수
 export const GRAD_ACCURACY = 0.9;                    // 졸업 정답률 임계
