@@ -26,12 +26,12 @@ console.log("\nB. page.jsx 구조 불변식");
 const src = readFileSync(new URL("../app/page.jsx", import.meta.url), "utf8");
 // 탭 통합: 두 소스 결합으로 누락 0 보장
 ok(src.includes("const MIND_SETS = [...ADHD_SETS, ...BRAIN_SETS]"), "마음+신경 = ADHD+뇌병증 결합(누락 0)");
-ok(src.includes("mind: MIND_SETS") && src.includes("py: PY_SETS"), "SET_GROUPS에 mind·py 등록");
+ok(src.includes("const SET_GROUPS = {}"), "그룹 덱 UI 제거(취업 로드맵 개편, 데이터는 보존)");
 ok(!/adhd:\s*ADHD_SETS|brain:\s*BRAIN_SETS/.test(src), "SET_GROUPS에서 adhd/brain 그룹 제거됨");
-ok(src.includes('{ id: "mind", label: "마음+신경" }'), "탭: 마음+신경 존재");
-ok(src.includes('{ id: "py", label: "파이썬 실무 " + PY_WORDS.length }'), "탭: 파이썬 실무 + 개수 표기");
+ok(src.includes("const MIND_SETS = [...ADHD_SETS, ...BRAIN_SETS]"), "마음+신경 데이터 상수 보존");
+ok(src.includes('from "./data/pythonWords"'), "파이썬 데이터 파일 보존");
 ok(!/id:\s*"adhd"/.test(src) && !/id:\s*"brain"/.test(src), "탭: adhd/brain 개별 탭 제거됨");
-ok(src.includes("...PY_WORDS"), "QUIZ_POOL/TOTAL_WORDS에 파이썬 단어 포함");
+ok(src.includes("...JAVA_INTRO_WORDS, ...LIB_WORDS_ACTIVE"), "QUIZ_POOL = 활성 5덱(취업 로드맵)");
 // 오답 로직: 랜덤 → 근접
 ok(src.includes("function nearbyWrong") && src.includes("function similarityScore"), "근접 오답 헬퍼 정의됨");
 ok(src.includes("nearbyWrong(correctKo"), "조립 퀴즈 오답이 근접 선별로 교체됨");
