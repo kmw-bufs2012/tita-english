@@ -1666,7 +1666,7 @@ function HomeScreen({ xp, learnedCount, go, greeting }) {
     try {
       const q = JSON.parse(localStorage.getItem("tita-quiz-v1") || "{}");
       const w = JSON.parse(localStorage.getItem("tita-write-v1") || "{}");
-      setSaved({ quiz: q.count || 0, write: Object.keys(w).length });
+      setSaved({ quiz: q.count || 0, write: countWrittenWords(w) });
     } catch (e) {}
   }, []);
   return (
@@ -2395,42 +2395,82 @@ function QuizScreen({ learned, addXp }) {
   );
 }
 
-/* ───────── 필기 노트 서버 동기화 (Upstash/Vercel KV, 없으면 이 기기에만 저장) ───────── */
+/* ───────── 필기 노트 저장·동기화 ─────────
+   로컬: 단어별 {t: 저장시각, s: 획배열}. 구형(획배열만) 데이터도 읽을 수 있어요.
+   서버: /api/notes 가 같은 형식을 단어별 최신 저장 우선(LWW)으로 병합해서,
+   한 기기의 푸시가 다른 기기의 단어를 지우지 않아요. s가 빈 배열 = 지운 단어(tombstone). */
 const WRITE_KEY = "tita-write-v1";
 let notesPushTimer = null;
+
+function noteStrokes(entry) {
+  if (Array.isArray(entry)) return entry;
+  return (entry && Array.isArray(entry.s)) ? entry.s : [];
+}
+function noteTime(entry) {
+  return Array.isArray(entry) ? 0 : (entry && entry.t) || 0;
+}
+function countWrittenWords(all) {
+  return Object.values(all || {}).filter((e) => noteStrokes(e).length).length;
+}
+function mergeNotesLWW(base, incoming) {
+  const out = { ...base };
+  for (const [word, entry] of Object.entries(incoming || {})) {
+    const cur = out[word];
+    if (cur === undefined || noteTime(entry) >= noteTime(cur)) out[word] = entry;
+  }
+  return out;
+}
 
 function loadAllNotes() {
   try { return JSON.parse(localStorage.getItem(WRITE_KEY) || "{}"); } catch (e) { return {}; }
 }
+/* 용량 초과(QuotaExceeded)로 조용히 유실되지 않게, 실패하면 오래된 단어부터 정리하고 재시도해요.
+   (동기화가 켜져 있으면 정리된 단어도 서버에는 남아 있어요) */
 function saveAllNotesLocal(all) {
-  try { localStorage.setItem(WRITE_KEY, JSON.stringify(all)); } catch (e) {}
+  try { localStorage.setItem(WRITE_KEY, JSON.stringify(all)); return; } catch (e) {}
+  let entries = Object.entries(all).sort((a, b) => noteTime(a[1]) - noteTime(b[1]));
+  while (entries.length > 10) {
+    entries = entries.slice(Math.max(1, Math.floor(entries.length * 0.2)));
+    try { localStorage.setItem(WRITE_KEY, JSON.stringify(Object.fromEntries(entries))); return; } catch (e) {}
+  }
 }
 function pushNotesToServer() {
   if (notesPushTimer) clearTimeout(notesPushTimer);
-  notesPushTimer = setTimeout(() => {
-    fetch("/api/notes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ notes: loadAllNotes() }),
-    }).catch(() => {});
+  notesPushTimer = setTimeout(async () => {
+    notesPushTimer = null;
+    try {
+      const res = await fetch("/api/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notes: loadAllNotes() }),
+      });
+      const data = await res.json();
+      // 서버가 돌려주는 병합 결과에는 다른 기기의 최신 필기도 들어 있어요
+      if (data.ok && data.notes) saveAllNotesLocal(mergeNotesLWW(loadAllNotes(), data.notes));
+    } catch (e) {}
   }, 1000);
 }
-// 서버 필기를 끌어와 로컬과 병합해요 (단어별로 스트로크가 더 많은 쪽을 채택).
+// 화면을 닫거나 나갈 때, 디바운스 대기 중인 푸시를 즉시 전송해서 유실을 막아요.
+if (typeof window !== "undefined" && !window.__titaNotesFlush) {
+  window.__titaNotesFlush = true;
+  window.addEventListener("pagehide", () => {
+    if (!notesPushTimer) return;
+    clearTimeout(notesPushTimer);
+    notesPushTimer = null;
+    try {
+      navigator.sendBeacon("/api/notes", new Blob([JSON.stringify({ notes: loadAllNotes() })], { type: "application/json" }));
+    } catch (e) {}
+  });
+}
+// 서버 필기를 끌어와 로컬과 병합해요. { ok, error } 반환 — 실패 사유를 화면에 보여줄 수 있게.
 async function pullNotesFromServer() {
   try {
     const res = await fetch("/api/notes", { cache: "no-store" });
     const data = await res.json();
-    if (!data.ok || !data.notes) return data.ok;
-    const local = loadAllNotes();
-    const merged = { ...local };
-    for (const [word, strokes] of Object.entries(data.notes)) {
-      const localCount = (local[word] || []).length;
-      const serverCount = (strokes || []).length;
-      if (!local[word] || serverCount > localCount) merged[word] = strokes;
-    }
-    saveAllNotesLocal(merged);
-    return true;
-  } catch (e) { return false; }
+    if (!data.ok) return { ok: false, error: data.error || "" };
+    if (data.notes) saveAllNotesLocal(mergeNotesLWW(loadAllNotes(), data.notes));
+    return { ok: true };
+  } catch (e) { return { ok: false, error: "네트워크 오류로 동기화 서버에 연결하지 못했어요." }; }
 }
 
 /* ───────── 필기 연습 패드 (펜·필압 지원, 5줄) ───────── */
@@ -2442,16 +2482,26 @@ function PracticePad({ word }) {
   const [penOnly, setPenOnly] = useState(false);
   const ROWS = 5;
   const loadStrokes = () => {
-    const all = loadAllNotes();
-    const raw = all[word];
-    if (!raw || !raw.length) return [];
+    const raw = noteStrokes(loadAllNotes()[word]);
     return raw.map((st) => ({ pts: st.map((p) => ({ x: p[0], y: p[1], lw: p[2] })) }));
+  };
+  /* 저장 용량을 줄이려고 촘촘한 포인트를 솎아내요(시닝). 화면상 0.4% 미만 이동은 생략 — 모양은 유지돼요. */
+  const packStroke = (st) => {
+    const out = [];
+    let last = null;
+    for (let i = 0; i < st.pts.length; i++) {
+      const p = st.pts[i];
+      const isEnd = i === st.pts.length - 1;
+      if (last && !isEnd && Math.abs(p.x - last.x) + Math.abs(p.y - last.y) < 0.004) continue;
+      out.push([Math.round(p.x * 1000) / 1000, Math.round(p.y * 1000) / 1000, Math.round(p.lw * 10) / 10]);
+      last = p;
+    }
+    return out;
   };
   const saveStrokes = () => {
     const all = loadAllNotes();
-    if (!strokesRef.current.length) delete all[word];
-    else all[word] = strokesRef.current.map((st) =>
-      st.pts.map((p) => [Math.round(p.x * 1000) / 1000, Math.round(p.y * 1000) / 1000, Math.round(p.lw * 10) / 10]));
+    // 빈 배열로 저장해 "지웠다"는 사실도 다른 기기에 전파돼요
+    all[word] = { t: Date.now(), s: strokesRef.current.map(packStroke) };
     saveAllNotesLocal(all);
     pushNotesToServer();
   };
@@ -2596,11 +2646,11 @@ function WritingScreen({ learned, markLearned }) {
   const [dayIdx, setDayIdx] = useState(null);
   const [idx, setIdx] = useState(0);
   const [justGot, setJustGot] = useState(false);
-  const [syncOn, setSyncOn] = useState(null); // null=확인중, true=동기화됨, false=이 기기에만
+  const [sync, setSync] = useState(null); // null=확인중, {ok:true}=동기화됨, {ok:false,error}=실패(사유 표시)
 
   useEffect(() => {
     let live = true;
-    pullNotesFromServer().then((ok) => { if (live) setSyncOn(ok); });
+    pullNotesFromServer().then((r) => { if (live) setSync(r); });
     return () => { live = false; };
   }, []);
 
@@ -2616,9 +2666,9 @@ function WritingScreen({ learned, markLearned }) {
         <p className="text-xs rounded-lg py-2 px-3" style={{ background: C.paper, border: "1px dashed " + C.copperSoft, color: C.inkSoft }}>
           ✍️ 태블릿 + 펜으로 단어를 5번씩 따라 쓰는 연습장이에요. 1행의 연한 글씨를 따라 쓰고, 나머지 줄은 혼자 써 보세요. 손이 기억해 줘요!
         </p>
-        {syncOn !== null && (
-          <p className="text-xs text-center" style={{ color: syncOn ? C.teal : C.inkSoft }}>
-            {syncOn ? "☁ 다른 기기와 자동 동기화돼요" : "⚠ 이 기기에만 저장돼요 (동기화 설정 필요)"}
+        {sync !== null && (
+          <p className="text-xs text-center" style={{ color: sync.ok ? C.teal : C.pinkDeep }}>
+            {sync.ok ? "☁ 다른 기기와 자동 동기화돼요" : "⚠ 동기화 안 됨 — " + (sync.error || "설정을 확인해 주세요")}
           </p>
         )}
         <ModeTabs mode={mode} setMode={(m) => { setMode(m); setSetId(null); setDayIdx(null); }} />
