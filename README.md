@@ -17,7 +17,7 @@
   - **한 번에 하나씩**: 자세한 설명·핵심 규칙·예문·확인 문제는 접어 두고 원할 때만 톡 펼쳐 인지 부하를 줄여요
   - **확인 문제는 한 문제씩**: 진행 막대와 함께 한 문제씩 풀고 즉시 피드백, 마지막에 점수 확인
 - **연상법 카드**: 단어마다 DeepSeek API가 만들어 주는 한국어 연상법으로 쉽게 암기
-- **손글씨 쓰기 연습(필기 노트)**: 화면에 직접 써 보며 철자 익히기. `KV_REST_API_URL`·`KV_REST_API_TOKEN`(Vercel KV/Upstash Redis)을 연결하면 필기 기록이 기기 간에 자동으로 동기화돼요. 연결하지 않으면 이 기기에만 저장돼요
+- **손글씨 쓰기 연습(필기 노트)**: 화면에 직접 써 보며 철자 익히기. Vercel Storage에서 Redis를 연결하면(`KV_REDIS_URL` 또는 `KV_REST_API_URL`·`KV_REST_API_TOKEN`) 필기 기록이 기기 간에 자동으로 동기화돼요. 연결하지 않으면 이 기기에만 저장돼요
 - **조립 퀴즈**: 데이(세트)당 20문제로 즉석 복습, 티타의 음성 응원
 - **작문 연습 (AI 채점)**: **문장 영작**(기초·중급·고급·실전 4단계) · **자유 작문** · **IT 비즈니스 실무 작문**을 DeepSeek API로 채점해 줘요 — 모범답안·잘한 점·교정 팁·점수(0~100)를 한 번에. 합격(60점↑) 시 XP 적립. 각 모드별로 엄선된 화제 리스트(문장 영작 3,600개 · 자유 작문 1,600개 · IT 실무 1,000개, **총 6,200개**)를 제공해 누를 때마다 새 문제가 나와요
   - **IT 비즈니스 실무 작문**: 이메일·Slack 메시지·버그 리포트·PR 설명·릴리스 노트·회의록·보고 등 현업 시나리오. 전문성·톤·형식까지 함께 봐 줘요
@@ -47,7 +47,8 @@
    | 이름 | 값 |
    |---|---|
    | `DEEPSEEK_MODEL` | 기본값은 `deepseek/deepseek-v4-flash`(오픈라우터 모델 슬러그). 다른 모델을 쓰고 싶을 때만 바꿔요 |
-   | `KV_REST_API_URL` / `KV_REST_API_TOKEN` | **필기 노트를 기기 간에 동기화**하고 싶을 때만 추가. Vercel 프로젝트에서 Storage → Add → KV(Upstash) 를 연결하면 이 두 값이 자동으로 채워져요. (Upstash Redis를 직접 만들었다면 `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` 이름도 인식해요) |
+   | `KV_REDIS_URL` | **필기 노트를 기기 간에 동기화**하고 싶을 때만 추가. Vercel 프로젝트에서 Storage → Redis(Redis Cloud)를 프리픽스 `KV`로 연결하면 자동으로 채워져요. (`REDIS_URL` 이름도 인식) |
+   | `KV_REST_API_URL` / `KV_REST_API_TOKEN` | 위 대신 Upstash(REST 방식)를 쓸 때. Storage → Upstash for Redis 연결 시 자동으로 채워져요. (`UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` 이름도 인식) |
 
 4. **Deploy** 클릭 → 끝나면 나오는 주소로 접속!
 
