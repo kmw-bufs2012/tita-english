@@ -1704,6 +1704,7 @@ function HomeScreen({ xp, learnedCount, go, greeting }) {
       <div className="grid gap-3">
         {[
           { key: "cards", Icon: BookOpen, tint: C.copper, title: "단어 카드", sub: "취업 로드맵 2,550단어 · Java 입문/중학/IT 기초/IT 심화/IT 실무" },
+          { key: "write", Icon: Pencil, tint: C.pinkDeep, title: "필기 노트", sub: "손글씨로 5번 쓰기 · 태블릿+펜 · 기기 간 자동 동기화" },
           { key: "quiz", Icon: Brain, tint: C.teal, title: "조립 퀴즈", sub: "20문제로 빠르게! 즉시 채점" },
           { key: "grammar", Icon: GraduationCap, tint: C.brass, title: "영어 문법", sub: "중학 문법 40유닛 · 하루 한 유닛(10~15분)" },
         ].map(({ key, Icon, tint, title, sub }) => (
@@ -2394,6 +2395,44 @@ function QuizScreen({ learned, addXp }) {
   );
 }
 
+/* ───────── 필기 노트 서버 동기화 (Upstash/Vercel KV, 없으면 이 기기에만 저장) ───────── */
+const WRITE_KEY = "tita-write-v1";
+let notesPushTimer = null;
+
+function loadAllNotes() {
+  try { return JSON.parse(localStorage.getItem(WRITE_KEY) || "{}"); } catch (e) { return {}; }
+}
+function saveAllNotesLocal(all) {
+  try { localStorage.setItem(WRITE_KEY, JSON.stringify(all)); } catch (e) {}
+}
+function pushNotesToServer() {
+  if (notesPushTimer) clearTimeout(notesPushTimer);
+  notesPushTimer = setTimeout(() => {
+    fetch("/api/notes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notes: loadAllNotes() }),
+    }).catch(() => {});
+  }, 1000);
+}
+// 서버 필기를 끌어와 로컬과 병합해요 (단어별로 스트로크가 더 많은 쪽을 채택).
+async function pullNotesFromServer() {
+  try {
+    const res = await fetch("/api/notes", { cache: "no-store" });
+    const data = await res.json();
+    if (!data.ok || !data.notes) return data.ok;
+    const local = loadAllNotes();
+    const merged = { ...local };
+    for (const [word, strokes] of Object.entries(data.notes)) {
+      const localCount = (local[word] || []).length;
+      const serverCount = (strokes || []).length;
+      if (!local[word] || serverCount > localCount) merged[word] = strokes;
+    }
+    saveAllNotesLocal(merged);
+    return true;
+  } catch (e) { return false; }
+}
+
 /* ───────── 필기 연습 패드 (펜·필압 지원, 5줄) ───────── */
 function PracticePad({ word }) {
   const canvasRef = useRef(null);
@@ -2402,23 +2441,19 @@ function PracticePad({ word }) {
   const curRef = useRef(null);
   const [penOnly, setPenOnly] = useState(false);
   const ROWS = 5;
-  const WRITE_KEY = "tita-write-v1";
   const loadStrokes = () => {
-    try {
-      const all = JSON.parse(localStorage.getItem(WRITE_KEY) || "{}");
-      const raw = all[word];
-      if (!raw || !raw.length) return [];
-      return raw.map((st) => ({ pts: st.map((p) => ({ x: p[0], y: p[1], lw: p[2] })) }));
-    } catch (e) { return []; }
+    const all = loadAllNotes();
+    const raw = all[word];
+    if (!raw || !raw.length) return [];
+    return raw.map((st) => ({ pts: st.map((p) => ({ x: p[0], y: p[1], lw: p[2] })) }));
   };
   const saveStrokes = () => {
-    try {
-      const all = JSON.parse(localStorage.getItem(WRITE_KEY) || "{}");
-      if (!strokesRef.current.length) delete all[word];
-      else all[word] = strokesRef.current.map((st) =>
-        st.pts.map((p) => [Math.round(p.x * 1000) / 1000, Math.round(p.y * 1000) / 1000, Math.round(p.lw * 10) / 10]));
-      localStorage.setItem(WRITE_KEY, JSON.stringify(all));
-    } catch (e) {}
+    const all = loadAllNotes();
+    if (!strokesRef.current.length) delete all[word];
+    else all[word] = strokesRef.current.map((st) =>
+      st.pts.map((p) => [Math.round(p.x * 1000) / 1000, Math.round(p.y * 1000) / 1000, Math.round(p.lw * 10) / 10]));
+    saveAllNotesLocal(all);
+    pushNotesToServer();
   };
 
   useEffect(() => {
@@ -2561,6 +2596,13 @@ function WritingScreen({ learned, markLearned }) {
   const [dayIdx, setDayIdx] = useState(null);
   const [idx, setIdx] = useState(0);
   const [justGot, setJustGot] = useState(false);
+  const [syncOn, setSyncOn] = useState(null); // null=확인중, true=동기화됨, false=이 기기에만
+
+  useEffect(() => {
+    let live = true;
+    pullNotesFromServer().then((ok) => { if (live) setSyncOn(ok); });
+    return () => { live = false; };
+  }, []);
 
   const dayList = mode === "java" ? DAYS_JAVA : mode === "itb" ? DAYS_ITB : mode === "ita" ? DAYS_ITA : mode === "itf" ? DAYS_ITF : DAYS;
   const group = SET_GROUPS[mode] || null;
@@ -2574,6 +2616,11 @@ function WritingScreen({ learned, markLearned }) {
         <p className="text-xs rounded-lg py-2 px-3" style={{ background: C.paper, border: "1px dashed " + C.copperSoft, color: C.inkSoft }}>
           ✍️ 태블릿 + 펜으로 단어를 5번씩 따라 쓰는 연습장이에요. 1행의 연한 글씨를 따라 쓰고, 나머지 줄은 혼자 써 보세요. 손이 기억해 줘요!
         </p>
+        {syncOn !== null && (
+          <p className="text-xs text-center" style={{ color: syncOn ? C.teal : C.inkSoft }}>
+            {syncOn ? "☁ 다른 기기와 자동 동기화돼요" : "⚠ 이 기기에만 저장돼요 (동기화 설정 필요)"}
+          </p>
+        )}
         <ModeTabs mode={mode} setMode={(m) => { setMode(m); setSetId(null); setDayIdx(null); }} />
         {group ? (
           <SetPicker sets={group}
