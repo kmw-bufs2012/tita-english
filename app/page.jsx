@@ -3,8 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import {
   Home, BookOpen, Brain, MessageCircle, Cog, Heart, Cpu,
-  MessageSquare, Volume2, ChevronLeft, ChevronRight, ChevronDown, Send, Sparkles, Wrench, Check, RotateCcw, Pencil, Undo2, Trash2, GraduationCap, Lightbulb, Target, FileText, LogOut
+  MessageSquare, Volume2, ChevronLeft, ChevronRight, ChevronDown, Send, Sparkles, Wrench, Check, RotateCcw, Pencil, Undo2, Trash2, GraduationCap, Lightbulb, Target, FileText, LogOut, Play, Terminal
 } from "lucide-react";
+import { JAVA_LESSONS } from "./data/java/lessons";
 import { PY_SETS, PY_WORDS } from "./data/pythonWords";
 import { MS_TRIM_SET } from "./data/middleTrim";
 import { JAVA_INTRO_WORDS } from "./data/javaIntro";
@@ -1707,6 +1708,7 @@ function HomeScreen({ xp, learnedCount, go, greeting }) {
           { key: "write", Icon: Pencil, tint: C.pinkDeep, title: "필기 노트", sub: "손글씨로 5번 쓰기 · 태블릿+펜 · 기기 간 자동 동기화" },
           { key: "quiz", Icon: Brain, tint: C.teal, title: "조립 퀴즈", sub: "20문제로 빠르게! 즉시 채점" },
           { key: "grammar", Icon: GraduationCap, tint: C.brass, title: "영어 문법", sub: "중학 문법 40유닛 · 하루 한 유닛(10~15분)" },
+          { key: "java", Icon: Cpu, tint: "#5B7FDB", title: "Java 문법·실습", sub: "입문 문법 18유닛 · 코드 직접 실행 + AI 첨삭" },
         ].map(({ key, Icon, tint, title, sub }) => (
           <button key={key} onClick={() => go(key)}
             className="flex items-center gap-3 rounded-2xl p-4 text-left press"
@@ -9676,9 +9678,315 @@ function GrammarScreen({ grammar, onComplete, setLast }) {
   );
 }
 
+/* ───────── Java 문법 · 프로그래밍 실습 ─────────
+   개념을 읽고(문법), 예제를 실행해 보고, 직접 코드를 짜서 실행+AI 첨삭까지.
+   실행은 /api/java-run (Piston + OpenRouter) 이 담당해요. */
+const JAVA_TINT = "#5B7FDB"; // Java 코스 전용 색(파란 계열)
+
+// 코드 블록(읽기 전용) — 줄 배경/모노스페이스
+function CodeBlock({ code }) {
+  return (
+    <pre className="rounded-xl p-3 overflow-x-auto text-xs leading-relaxed"
+      style={{ background: "#2B2233", color: "#F3ECDF", fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" }}>
+      <code>{code}</code>
+    </pre>
+  );
+}
+
+// 실행 결과 콘솔 표시(정상/컴파일오류/런타임오류)
+function RunConsole({ result }) {
+  if (!result) return null;
+  if (result.error) {
+    return (
+      <div className="rounded-xl p-3 text-xs" style={{ background: C.redSoft, border: "1px solid " + C.red, color: C.ink }}>
+        <b style={{ color: C.red }}>⚠ 실행 실패 </b>{result.error}
+      </div>
+    );
+  }
+  const err = result.compileError || result.stderr;
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="rounded-xl p-3 text-xs overflow-x-auto" style={{ background: "#141018", color: "#E8FFE8", fontFamily: "ui-monospace, Menlo, Consolas, monospace" }}>
+        <div className="flex items-center gap-1 mb-1" style={{ color: "#8FA9B8" }}>
+          <Terminal size={12} /> <span>출력</span>
+        </div>
+        {result.stdout ? <pre className="whitespace-pre-wrap">{result.stdout}</pre> : <span style={{ color: "#6E7E88" }}>(출력 없음)</span>}
+        {err ? (
+          <pre className="whitespace-pre-wrap mt-2" style={{ color: "#FF9C8A" }}>{result.compileError ? "컴파일 오류:\n" : "실행 오류:\n"}{err}</pre>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function JavaLesson({ lesson, tint, isDone, onComplete, onBack }) {
+  const [code, setCode] = useState(lesson.practice.starter);
+  const [running, setRunning] = useState(false);
+  const [result, setResult] = useState(null);       // 실습 실행 결과
+  const [exRunning, setExRunning] = useState(false);
+  const [exResult, setExResult] = useState(null);    // 예제 실행 결과
+  const [justDone, setJustDone] = useState(false);
+
+  // 레슨이 바뀌면 상태 초기화
+  useEffect(() => {
+    setCode(lesson.practice.starter);
+    setResult(null); setExResult(null); setJustDone(false);
+  }, [lesson.id]);
+
+  const callRun = async (src, expectedOutput, task) => {
+    const res = await fetch("/api/java-run", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: src, expectedOutput, task }),
+    });
+    return res.json();
+  };
+
+  const runExample = async () => {
+    if (exRunning) return;
+    setExRunning(true); setExResult(null);
+    try { setExResult(await callRun(lesson.example.code, "", null)); }
+    catch (e) { setExResult({ error: "통신이 잠깐 끊겼어요. 다시 시도해 주세요." }); }
+    setExRunning(false);
+  };
+
+  const runPractice = async () => {
+    if (running || !code.trim()) return;
+    setRunning(true); setResult(null);
+    try {
+      const data = await callRun(code, lesson.practice.expectedOutput, lesson.practice.task);
+      setResult(data);
+      if (data.ok && data.passed) { setJustDone(true); if (onComplete) onComplete(); }
+    } catch (e) {
+      setResult({ error: "통신이 잠깐 끊겼어요. 다시 시도해 주세요." });
+    }
+    setRunning(false);
+  };
+
+  // 코드 편집기에서 Tab 키로 2칸 들여쓰기
+  const onCodeKey = (e) => {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      const el = e.target, s = el.selectionStart, en = el.selectionEnd;
+      const next = code.slice(0, s) + "  " + code.slice(en);
+      setCode(next);
+      requestAnimationFrame(() => { el.selectionStart = el.selectionEnd = s + 2; });
+    }
+  };
+
+  const passed = result && result.ok && result.passed;
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-2">
+        <button onClick={onBack} className="p-1 rounded-lg press" style={{ color: C.copper }}><ChevronLeft size={22} /></button>
+        <h2 className="font-bold text-base" style={{ color: C.ink, fontFamily: "'Jua', sans-serif" }}>{lesson.title}</h2>
+        {(isDone || justDone) && <span className="rounded-md px-1.5 py-0.5 text-[10px] font-bold text-white shrink-0" style={{ background: C.teal }}>✓ 완료</span>}
+      </div>
+
+      {/* 딱 이거 하나만! */}
+      <div className="rounded-2xl p-4" style={{ background: C.tealSoft, border: "2px solid " + C.teal }}>
+        <div className="flex items-center gap-1.5 mb-1">
+          <Target size={15} style={{ color: C.teal }} />
+          <span className="font-bold text-xs" style={{ color: C.teal }}>딱 이거 하나만!</span>
+        </div>
+        <p className="text-sm font-bold leading-relaxed" style={{ color: C.ink }}>{lesson.key}</p>
+      </div>
+
+      {/* 기억 꿀팁 */}
+      <div className="rounded-2xl p-4" style={{ background: "#FBF3DD", border: "2px solid " + C.brass }}>
+        <div className="flex items-center gap-1.5 mb-1">
+          <Lightbulb size={15} style={{ color: "#B8881F" }} />
+          <span className="font-bold text-xs" style={{ color: "#B8881F" }}>기억 꿀팁</span>
+        </div>
+        <p className="text-sm leading-relaxed" style={{ color: C.ink }}>{lesson.hook}</p>
+      </div>
+
+      <p className="text-[11px] px-1" style={{ color: C.inkSoft }}>👇 개념을 펼쳐 읽고, 예제를 실행해 본 뒤, 마지막 실습에서 직접 코드를 짜 보세요.</p>
+
+      <Collapsible icon={<BookOpen size={16} />} label="자세한 설명" accent={tint}>
+        <p className="text-sm leading-relaxed" style={{ color: C.ink }}>{lesson.summary}</p>
+      </Collapsible>
+
+      <Collapsible icon={<Wrench size={16} />} label="핵심 규칙" accent={C.copper} count={lesson.rules.length}>
+        <ul className="flex flex-col gap-2">
+          {lesson.rules.map((r, i) => (
+            <li key={i} className="text-sm leading-relaxed flex gap-2" style={{ color: C.ink }}>
+              <span className="font-bold shrink-0" style={{ color: tint }}>{i + 1}.</span><span>{r}</span>
+            </li>
+          ))}
+        </ul>
+      </Collapsible>
+
+      <Collapsible icon={<Cpu size={16} />} label="예제 코드" accent={JAVA_TINT} defaultOpen>
+        <div className="flex flex-col gap-2">
+          <CodeBlock code={lesson.example.code} />
+          <button onClick={runExample} disabled={exRunning}
+            className="rounded-xl py-2 text-sm font-bold press inline-flex items-center justify-center gap-1"
+            style={{ background: exRunning ? C.copperSoft : JAVA_TINT, color: "#fff" }}>
+            <Play size={14} /> {exRunning ? "실행 중…" : "예제 실행해 보기"}
+          </button>
+          <RunConsole result={exResult} />
+          <p className="text-xs leading-relaxed" style={{ color: C.inkSoft }}>💬 {lesson.example.explain}</p>
+        </div>
+      </Collapsible>
+
+      {/* 실습 */}
+      <div className="rounded-2xl p-4 flex flex-col gap-2" style={{ background: C.card, border: "2px solid " + JAVA_TINT }}>
+        <div className="flex items-center gap-1.5">
+          <Terminal size={15} style={{ color: JAVA_TINT }} />
+          <span className="font-bold text-xs" style={{ color: JAVA_TINT }}>실습 · 직접 짜 보기</span>
+        </div>
+        <p className="text-sm leading-relaxed" style={{ color: C.ink }}>{lesson.practice.task}</p>
+
+        <textarea value={code} onChange={(e) => setCode(e.target.value)} onKeyDown={onCodeKey}
+          spellCheck={false} rows={Math.min(16, code.split("\n").length + 2)}
+          className="rounded-xl p-3 text-xs w-full resize-y"
+          style={{ background: "#2B2233", color: "#F3ECDF", fontFamily: "ui-monospace, Menlo, Consolas, monospace", border: "2px solid " + C.copperSoft, outline: "none", lineHeight: 1.6 }} />
+
+        <div className="flex gap-2">
+          <button onClick={() => { setCode(lesson.practice.starter); setResult(null); }} disabled={running}
+            className="rounded-xl py-2 px-3 text-sm font-bold press shrink-0"
+            style={{ background: C.card, border: "2px solid " + C.copperSoft, color: C.inkSoft }}>
+            <RotateCcw size={14} className="inline mr-1" />처음으로
+          </button>
+          <button onClick={runPractice} disabled={running || !code.trim()}
+            className="flex-1 rounded-xl py-2 text-sm font-bold press inline-flex items-center justify-center gap-1"
+            style={{ background: running || !code.trim() ? C.copperSoft : C.pinkDeep, color: "#fff" }}>
+            <Play size={14} /> {running ? "티타가 실행·채점 중…" : "실행하기"}
+          </button>
+        </div>
+
+        <Collapsible icon={<Lightbulb size={16} />} label="힌트 보기" accent={C.brass}>
+          <p className="text-sm leading-relaxed" style={{ color: C.ink }}>{lesson.practice.hint}</p>
+        </Collapsible>
+
+        {result && result.ok && (
+          <div className="pop flex flex-col gap-2">
+            {result.hasExpected && (
+              <div className="rounded-xl p-3 text-sm font-bold text-center"
+                style={{ background: passed ? C.tealSoft : C.redSoft, border: "2px solid " + (passed ? C.teal : C.red), color: passed ? C.teal : C.red }}>
+                {passed ? "✅ 정답! 기대한 출력과 똑같아요 (+15XP)" : "❌ 아직 기대한 출력과 달라요. 출력을 비교해 보세요."}
+              </div>
+            )}
+            {!passed && result.hasExpected && (
+              <div className="rounded-xl p-3 text-xs" style={{ background: C.paper, border: "1px dashed " + C.copperSoft, color: C.inkSoft }}>
+                <b>기대한 출력</b>
+                <pre className="whitespace-pre-wrap mt-1" style={{ color: C.ink }}>{lesson.practice.expectedOutput}</pre>
+              </div>
+            )}
+          </div>
+        )}
+        <RunConsole result={result} />
+
+        {result && result.ok && result.good ? (
+          <div className="rounded-xl p-3 text-sm" style={{ background: C.tealSoft, border: "2px solid " + C.teal, color: C.ink }}>
+            <b style={{ color: C.teal }}>👍 잘한 점 </b>{result.good}
+          </div>
+        ) : null}
+        {result && result.ok && result.feedback ? (
+          <div className="rounded-xl p-3 text-sm" style={{ background: "#FFF", border: "1px dashed " + C.copper, color: C.ink }}>
+            <b style={{ color: C.copper }}>🔧 티타의 첨삭 </b>{result.feedback}
+          </div>
+        ) : null}
+        {result && result.ok && !result.aiOn ? (
+          <p className="text-[11px]" style={{ color: C.inkSoft }}>ℹ️ AI 첨삭은 DEEPSEEK_API_KEY 환경변수가 있을 때 함께 제공돼요. 지금은 실행 결과만 보여줘요.</p>
+        ) : null}
+      </div>
+
+      {justDone && (
+        <p className="text-center text-sm font-bold pop" style={{ color: C.teal }}>
+          <Sparkles size={14} className="inline mr-1" />유닛 완료! 코드가 돌아갔어요, 정말 잘하셨어요 ✨
+        </p>
+      )}
+    </div>
+  );
+}
+
+function JavaScreen({ java, onComplete, setLast }) {
+  const lessons = JAVA_LESSONS;
+  const [lessonId, setLessonId] = useState(null);
+  const done = (java && java.done) || {};
+
+  const openLesson = (id) => { setLessonId(id); if (setLast) setLast(id); };
+  const lesson = lessonId ? lessons.find((l) => l.id === lessonId) : null;
+
+  if (lesson) return (
+    <JavaLesson lesson={lesson} tint={JAVA_TINT}
+      isDone={!!done[lesson.id]}
+      onComplete={() => onComplete && onComplete(lesson.id)}
+      onBack={() => setLessonId(null)} />
+  );
+
+  const doneCount = lessons.filter((l) => done[l.id]).length;
+  const pct = lessons.length ? Math.round((doneCount / lessons.length) * 100) : 0;
+  const nextUndone = lessons.find((l) => !done[l.id]);
+  const lastLesson = java && java.last ? lessons.find((l) => l.id === java.last) : null;
+
+  return (
+    <div className="flex flex-col gap-3">
+      <TitaSays mood="happy">
+        Java 입문 문법 실습! 개념을 읽고 → 예제를 돌려 보고 → 직접 코드를 짜서 실행까지. 백엔드 개발자의 첫걸음이에요. 하루 한 유닛이면 충분해요!
+      </TitaSays>
+
+      <div className="rounded-2xl p-3" style={{ background: C.card, border: "2px solid " + JAVA_TINT }}>
+        <div className="flex items-center gap-2 text-xs mb-1.5">
+          <span className="font-bold" style={{ color: JAVA_TINT }}>Java 실습 진행</span>
+          <span className="ml-auto font-bold" style={{ color: C.ink }}>{doneCount} / {lessons.length} 완료 ({pct}%)</span>
+        </div>
+        <div className="h-2 rounded-full overflow-hidden" style={{ background: C.paper, border: "1px solid " + C.copperSoft }}>
+          <div className="h-full rounded-full" style={{ width: pct + "%", background: JAVA_TINT, transition: "width .3s" }} />
+        </div>
+      </div>
+
+      {nextUndone ? (
+        <button onClick={() => openLesson(nextUndone.id)}
+          className="rounded-2xl p-4 text-left press" style={{ background: C.tealSoft, border: "2px solid " + C.teal }}>
+          <div className="flex items-center gap-1.5 mb-1">
+            <Target size={15} style={{ color: C.teal }} />
+            <span className="font-bold text-xs" style={{ color: C.teal }}>오늘의 실습 · 딱 이거 하나만!</span>
+          </div>
+          <p className="text-sm font-bold" style={{ color: C.ink }}>{nextUndone.title}</p>
+          <p className="text-[11px] mt-0.5" style={{ color: C.inkSoft }}>{nextUndone.key}</p>
+        </button>
+      ) : (
+        <div className="rounded-2xl p-4" style={{ background: C.tealSoft, border: "2px solid " + C.teal }}>
+          <p className="text-sm font-bold" style={{ color: C.teal }}>🎉 {lessons.length}개 유닛을 모두 끝냈어요!</p>
+          <p className="text-[11px] mt-0.5" style={{ color: C.inkSoft }}>이제 아무 유닛이나 눌러 복습하거나, 코드를 바꿔 실험해 보셔도 좋아요.</p>
+        </div>
+      )}
+
+      {lastLesson && (!nextUndone || lastLesson.id !== nextUndone.id) && (
+        <button onClick={() => openLesson(lastLesson.id)}
+          className="rounded-xl py-2 px-3 text-left press text-xs font-bold"
+          style={{ background: C.card, border: "1px solid " + C.copperSoft, color: C.inkSoft }}>
+          ↩ 이어서 하기 — {lastLesson.title}
+        </button>
+      )}
+
+      <p className="text-xs px-1" style={{ color: C.inkSoft }}>총 {lessons.length}개 유닛 · 코드는 실제로 컴파일·실행돼요</p>
+      {lessons.map((l, i) => {
+        const isDone = !!done[l.id];
+        return (
+          <button key={l.id} onClick={() => openLesson(l.id)}
+            className="text-left rounded-2xl p-4 press w-full"
+            style={{ background: isDone ? C.tealSoft : C.card, border: "2px solid " + (isDone ? C.teal : C.copperSoft), boxShadow: "0 2px 0 rgba(70,49,37,0.08)" }}>
+            <div className="flex items-center gap-2">
+              <span className="rounded-lg px-2 py-1 text-xs font-bold shrink-0" style={{ background: C.paper, border: "1px solid " + (isDone ? C.teal : JAVA_TINT), color: isDone ? C.teal : JAVA_TINT }}>{isDone ? "✓" : "Day " + (l.day ?? i + 1)}</span>
+              <span className="font-bold text-sm" style={{ color: C.ink }}>{l.title}</span>
+              <ChevronRight size={18} className="ml-auto shrink-0" style={{ color: C.inkSoft }} />
+            </div>
+            <p className="text-xs mt-1 leading-relaxed" style={{ color: C.inkSoft }}>{l.key}</p>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 /* ───────── 화면 ↔ 주소(URL) 매핑 ───────── */
 // 새로고침해도 현재 페이지가 유지되고, 페이지마다 고유 주소를 갖도록.
-const SCREEN_KEYS = ["home", "cards", "write", "quiz", "grammar"];
+const SCREEN_KEYS = ["home", "cards", "write", "quiz", "grammar", "java"];
 const pathToScreen = (path) => {
   const seg = (path || "/").split("/")[1] || "home"; // "/quiz" → "quiz", "/" → "home"
   return SCREEN_KEYS.includes(seg) ? seg : "home";
@@ -9692,6 +10000,7 @@ export default function TitaEnglishWorkshop() {
   const [learned, setLearned] = useState({});
   const [sr, setSr] = useState(srEmptyState());
   const [grammar, setGrammar] = useState({ done: {}, last: null });
+  const [java, setJava] = useState({ done: {}, last: null });
   const [greeting, setGreeting] = useState(GREETINGS[0]);
 
   // 진행도 + 설정 불러오기 (이 브라우저에 저장됨)
@@ -9717,6 +10026,10 @@ export default function TitaEnglishWorkshop() {
     try {
       const gr = JSON.parse(localStorage.getItem("tita-grammar-v1") || "null");
       if (gr) setGrammar({ done: gr.done || {}, last: gr.last || null });
+    } catch (e) {}
+    try {
+      const jv = JSON.parse(localStorage.getItem("tita-java-v1") || "null");
+      if (jv) setJava({ done: jv.done || {}, last: jv.last || null });
     } catch (e) {}
     try {
       const v = localStorage.getItem("tita-voice-v1");
@@ -9763,6 +10076,18 @@ export default function TitaEnglishWorkshop() {
     const ng = { done: grammar.done, last: topicId };
     setGrammar(ng); persistGrammar(ng);
   };
+  const persistJava = (j) => { try { localStorage.setItem("tita-java-v1", JSON.stringify(j)); } catch (e) {} };
+  // Java 실습 유닛 완료: done 저장 + 첫 완료 시에만 +15XP (실행·정답까지 해야 완료라 배점 조금 높게)
+  const javaComplete = (lessonId) => {
+    const first = !java.done[lessonId];
+    const nj = { done: { ...java.done, [lessonId]: true }, last: lessonId };
+    setJava(nj); persistJava(nj);
+    if (first) addXp(15);
+  };
+  const javaSetLast = (lessonId) => {
+    const nj = { done: java.done, last: lessonId };
+    setJava(nj); persistJava(nj);
+  };
   // 신규 유닛 학습 완료: new → learned
   const srLearnUnit = (deck, unitId) => setSr((s) => { const n = completeLearn(s, deck, unitId, Date.now()); persistSr(n); return n; });
   // 복습 세션 완료: 단계 전진 + 정답률 기록 + known 등록
@@ -9778,7 +10103,7 @@ export default function TitaEnglishWorkshop() {
 
   const learnedCount = Object.keys(learned).length;
   const { cur } = levelInfo(xp);
-  const TITLES = { home: "티타의 영어 정비공방", cards: "단어 카드", write: "필기 노트", quiz: "조립 퀴즈", grammar: "영어 문법" };
+  const TITLES = { home: "티타의 영어 정비공방", cards: "단어 카드", write: "필기 노트", quiz: "조립 퀴즈", grammar: "영어 문법", java: "Java 문법·실습" };
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: C.paper, fontFamily: "'Gowun Dodum', sans-serif" }}>
@@ -9827,17 +10152,19 @@ export default function TitaEnglishWorkshop() {
         {screen === "write" && <WritingScreen learned={learned} markLearned={markLearned} />}
         {screen === "quiz" && <QuizScreen learned={learned} addXp={addXp} />}
         {screen === "grammar" && <GrammarScreen grammar={grammar} onComplete={grammarComplete} setLast={grammarSetLast} />}
+        {screen === "java" && <JavaScreen java={java} onComplete={javaComplete} setLast={javaSetLast} />}
       </main>
 
       {/* 하단 탭 */}
       <nav className="fixed bottom-0 left-0 right-0 z-10" style={{ background: C.card, borderTop: `2px solid ${C.copperSoft}` }}>
-        <div className="max-w-md mx-auto grid grid-cols-5">
+        <div className="max-w-md mx-auto grid grid-cols-6">
           {[
             { key: "home", Icon: Home, label: "홈" },
             { key: "cards", Icon: BookOpen, label: "단어" },
             { key: "write", Icon: Pencil, label: "필기" },
             { key: "quiz", Icon: Brain, label: "퀴즈" },
             { key: "grammar", Icon: GraduationCap, label: "문법" },
+            { key: "java", Icon: Cpu, label: "Java" },
           ].map(({ key, Icon, label }) => {
             const active = screen === key;
             return (
