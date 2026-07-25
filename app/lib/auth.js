@@ -1,4 +1,4 @@
-// 티타 영어 정비공방 — 세션 토큰 (HMAC SHA-256, Web Crypto)
+// 티타 어학 정비공방 — 세션 토큰 (HMAC SHA-256, Web Crypto)
 // Edge runtime(미들웨어)과 Node runtime(API) 모두에서 동작합니다.
 
 const enc = new TextEncoder();

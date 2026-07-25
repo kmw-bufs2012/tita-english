@@ -63,7 +63,7 @@ export default function LoginPage() {
         <div className="flex items-center justify-center gap-2 mb-1">
           <Wrench size={22} style={{ color: C.copper }} />
           <h1 className="text-xl" style={{ color: C.ink, fontFamily: "'Jua', sans-serif" }}>
-            티타의 영어 정비공방
+            티타의 어학 정비공방
           </h1>
         </div>
         <p className="text-center text-xs" style={{ color: C.inkSoft }}>
