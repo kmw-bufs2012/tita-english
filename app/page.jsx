@@ -10,6 +10,8 @@ import { JP_SYNONYM_WORDS } from "./data/japanese/synonyms";
 import { JP_COMPOUND_VERBS } from "./data/japanese/compoundVerbs";
 import { JP_ADVERB_WORDS } from "./data/japanese/adverbs";
 import { JP_ONOMATOPOEIA_WORDS } from "./data/japanese/onomatopoeia";
+import { JP_IDIOM_WORDS } from "./data/japanese/idioms";
+import { JP_YOJIJUKUGO_WORDS } from "./data/japanese/yojijukugo";
 import { PY_SETS, PY_WORDS } from "./data/pythonWords";
 import { MS_TRIM_SET } from "./data/middleTrim";
 import { JAVA_INTRO_WORDS } from "./data/javaIntro";
@@ -1419,11 +1421,16 @@ const DAYS_JPD = [];
 for (let i = 0; i < JP_ADVERB_WORDS.length; i += 20) DAYS_JPD.push(JP_ADVERB_WORDS.slice(i, i + 20));
 const DAYS_JPO = [];
 for (let i = 0; i < JP_ONOMATOPOEIA_WORDS.length; i += 20) DAYS_JPO.push(JP_ONOMATOPOEIA_WORDS.slice(i, i + 20));
+const DAYS_JPI = [];
+for (let i = 0; i < JP_IDIOM_WORDS.length; i += 20) DAYS_JPI.push(JP_IDIOM_WORDS.slice(i, i + 20));
+const DAYS_JPY = [];
+for (let i = 0; i < JP_YOJIJUKUGO_WORDS.length; i += 20) DAYS_JPY.push(JP_YOJIJUKUGO_WORDS.slice(i, i + 20));
 const ADHD_WORDS = ADHD_SETS.flatMap((s) => s.words);
 const BRAIN_WORDS = BRAIN_SETS.flatMap((s) => s.words);
 /* 취업 로드맵: 퀴즈·집계는 활성 5덱(2,550단어)만 사용. 제거 덱 데이터는 상수로 보존 */
 // 퀴즈 오답 후보 풀 — 노출 중인 덱(일본어 2 + 중학 영단어)만. 보존된 레거시 덱은 넣지 않는다.
-const QUIZ_POOL = [...JP_SYNONYM_WORDS, ...JP_COMPOUND_VERBS, ...JP_ADVERB_WORDS, ...JP_ONOMATOPOEIA_WORDS, ...LIB_WORDS_ACTIVE];
+const QUIZ_POOL = [...JP_SYNONYM_WORDS, ...JP_COMPOUND_VERBS, ...JP_ADVERB_WORDS,
+  ...JP_ONOMATOPOEIA_WORDS, ...JP_IDIOM_WORDS, ...JP_YOJIJUKUGO_WORDS, ...LIB_WORDS_ACTIVE];
 const TOTAL_WORDS = QUIZ_POOL.length;
 
 /* ── SR(간격 반복) 대상 덱의 학습 단위 목록 (추천/졸업 경로 순서: 중학→고등→IT실무→파이썬) ──
@@ -1433,15 +1440,22 @@ const TOTAL_WORDS = QUIZ_POOL.length;
    N1 語彙는 「言い換え類義」·「用法」이 변별력을 가르므로 유의어 덱이 우선순위 1군.
    ※ 제거된 레거시 덱(java·itb·ita·itf)의 데이터는 리포지토리에 그대로 보존되어 있다. */
 const SR_DECK_META = [
+  { deck: "jpy", label: "四字熟語 100", days: DAYS_JPY },
   { deck: "jps", label: "類義語 200", days: DAYS_JPS },
   { deck: "jpc", label: "複合動詞 200", days: DAYS_JPC },
   { deck: "jpd", label: "副詞·接続 200", days: DAYS_JPD },
+  { deck: "jpi", label: "慣用句 200", days: DAYS_JPI },
   { deck: "jpo", label: "オノマトペ 100", days: DAYS_JPO },
   { deck: "lib", label: "중학 1500", days: DAYS },
 ];
-const SR_DECK_LABEL = { jps: "類義語 200", jpc: "複合動詞 200", jpd: "副詞·接続 200", jpo: "オノマトペ 100", lib: "중학 1500" };
-// 다음 추천 덱 (졸업 시 이동 제안). 중학 영단어가 경로의 마지막.
-const SR_NEXT_DECK = { jps: "jpc", jpc: "jpd", jpd: "jpo", jpo: "lib", lib: null };
+const SR_DECK_LABEL = {
+  jpy: "四字熟語 100", jps: "類義語 200", jpc: "複合動詞 200",
+  jpd: "副詞·接続 200", jpi: "慣用句 200", jpo: "オノマトペ 100", lib: "중학 1500",
+};
+/* 다음 추천 덱 (졸업 시 이동 제안).
+   四字熟語를 맨 앞에 둔 이유: 한국 사자성어와 상당 부분 겹쳐 투자 대비 회수가 가장 빠르다
+   (학습 초점은 뜻이 아니라 요미). 이어서 和語 사각지대(複合動詞·副詞·慣用句·オノマトペ)로 들어간다. */
+const SR_NEXT_DECK = { jpy: "jps", jps: "jpc", jpc: "jpd", jpd: "jpi", jpi: "jpo", jpo: "lib", lib: null };
 const SR_DECK_UNITS = SR_DECK_META.flatMap((d) =>
   d.days
     ? d.days.map((words, i) => ({ deck: d.deck, unitId: "d" + i, cardCount: words.length, words, label: d.label + " · Day " + (i + 1) }))
@@ -1449,8 +1463,9 @@ const SR_DECK_UNITS = SR_DECK_META.flatMap((d) =>
 );
 // 덱별 전체 단어 (중복 제외 남은 수·예상일 계산용)
 const SR_DECK_ALL_WORDS = {
-  jps: JP_SYNONYM_WORDS, jpc: JP_COMPOUND_VERBS, jpd: JP_ADVERB_WORDS,
-  jpo: JP_ONOMATOPOEIA_WORDS, lib: LIB_WORDS_ACTIVE,
+  jpy: JP_YOJIJUKUGO_WORDS, jps: JP_SYNONYM_WORDS, jpc: JP_COMPOUND_VERBS,
+  jpd: JP_ADVERB_WORDS, jpi: JP_IDIOM_WORDS, jpo: JP_ONOMATOPOEIA_WORDS,
+  lib: LIB_WORDS_ACTIVE,
 };
 /* ───────── 영어 문법 (2022 개정 교육과정: 중학·고등·수능) ───────── */
 /* ───────── 영어 문법: 일본어 QA/LQA 직무 최소 범위 ─────────
@@ -1748,7 +1763,7 @@ function HomeScreen({ xp, learnedCount, go, greeting }) {
 
       <div className="grid gap-3">
         {[
-          { key: "cards", Icon: BookOpen, tint: C.copper, title: "단어 카드", sub: "일본어 N1 700단어 (類義語·複合動詞·副詞·オノマトペ) · 중학 영단어 1500" },
+          { key: "cards", Icon: BookOpen, tint: C.copper, title: "단어 카드", sub: "일본어 N1 1,000단어 (四字熟語·類義語·複合動詞·副詞·慣用句·オノマトペ) · 중학 영단어 1500" },
           { key: "write", Icon: Pencil, tint: C.pinkDeep, title: "필기 노트", sub: "손글씨로 5번 쓰기 · 태블릿+펜 · 기기 간 자동 동기화" },
           { key: "quiz", Icon: Brain, tint: C.teal, title: "조립 퀴즈", sub: "20문제로 빠르게! 즉시 채점" },
           { key: "grammar", Icon: GraduationCap, tint: C.brass, title: "영어 문법", sub: "QA·LQA 실무 영문법 18유닛 · 버그 리포트 작성용" },
@@ -1808,9 +1823,11 @@ function SetPicker({ title, learned, onPick, allowAll, sets = SETS }) {
 /* ───────── 모드 탭 — 취업 로드맵 표시 순서 P1~P5 (Java 입문 / 중학 1500 / IT 기초 / IT 심화 / IT 실무) ───────── */
 function ModeTabs({ mode, setMode }) {
   const tabs = [
+    { id: "jpy", label: "四字熟語 100" },
     { id: "jps", label: "類義語 200" },
     { id: "jpc", label: "複合動詞 200" },
     { id: "jpd", label: "副詞·接続 200" },
+    { id: "jpi", label: "慣用句 200" },
     { id: "jpo", label: "オノマトペ 100" },
     { id: "lib", label: "중학 1500" },
   ];
@@ -2024,7 +2041,8 @@ function CardsScreen({ learned, markLearned, sr, srLearnUnit, srReviewUnit }) {
     try { const m = localStorage.getItem("tita-mn-v1"); if (m) setMnMap(JSON.parse(m)); } catch (e) {}
   }, []);
 
-  const dayList = mode === "jps" ? DAYS_JPS : mode === "jpc" ? DAYS_JPC : mode === "jpd" ? DAYS_JPD : mode === "jpo" ? DAYS_JPO : DAYS;
+  const dayList = mode === "jpy" ? DAYS_JPY : mode === "jps" ? DAYS_JPS : mode === "jpc" ? DAYS_JPC
+    : mode === "jpd" ? DAYS_JPD : mode === "jpi" ? DAYS_JPI : mode === "jpo" ? DAYS_JPO : DAYS;
   const group = SET_GROUPS[mode] || null;
   const isSr = SR_DECKS.includes(mode);
   const unitId = group ? (setId ? "s:" + setId : null) : (dayIdx !== null ? "d" + dayIdx : null);
@@ -2094,7 +2112,9 @@ function CardsScreen({ learned, markLearned, sr, srLearnUnit, srReviewUnit }) {
   const isLearned = !!learned[w.en];
   const mn = w.mn || mnMap[w.en] || null;
   const title = group ? group.find((s) => s.id === setId).name + " 세트" : (SR_DECK_LABEL[mode] || "중학 1500") + " · Day " + (dayIdx + 1);
-  const tint = group ? group.find((s) => s.id === setId).tint : mode === "jps" ? C.pinkDeep : mode === "jpc" ? C.teal : mode === "jpd" ? C.copper : mode === "jpo" ? "#5B7FDB" : C.brass;
+  const tint = group ? group.find((s) => s.id === setId).tint
+    : mode === "jpy" ? C.pink : mode === "jps" ? C.pinkDeep : mode === "jpc" ? C.teal
+    : mode === "jpd" ? C.copper : mode === "jpi" ? "#8B6BB8" : mode === "jpo" ? "#5B7FDB" : C.brass;
 
   const isLast = idx + 1 >= words.length;
   const nextCard = () => { setFlip(false); setJustGot(false); setMnErr(""); setIdx((i) => i + 1); };
@@ -2316,7 +2336,8 @@ function QuizScreen({ learned, addXp }) {
     } catch (e) {}
   };
 
-  const dayList = mode === "jps" ? DAYS_JPS : mode === "jpc" ? DAYS_JPC : mode === "jpd" ? DAYS_JPD : mode === "jpo" ? DAYS_JPO : DAYS;
+  const dayList = mode === "jpy" ? DAYS_JPY : mode === "jps" ? DAYS_JPS : mode === "jpc" ? DAYS_JPC
+    : mode === "jpd" ? DAYS_JPD : mode === "jpi" ? DAYS_JPI : mode === "jpo" ? DAYS_JPO : DAYS;
   const group = SET_GROUPS[mode] || null;
   const startPool = (pool) => {
     const chosen = shuffle(pool).slice(0, 20);
@@ -2726,7 +2747,8 @@ function WritingScreen({ learned, markLearned }) {
     return () => { live = false; };
   }, []);
 
-  const dayList = mode === "jps" ? DAYS_JPS : mode === "jpc" ? DAYS_JPC : mode === "jpd" ? DAYS_JPD : mode === "jpo" ? DAYS_JPO : DAYS;
+  const dayList = mode === "jpy" ? DAYS_JPY : mode === "jps" ? DAYS_JPS : mode === "jpc" ? DAYS_JPC
+    : mode === "jpd" ? DAYS_JPD : mode === "jpi" ? DAYS_JPI : mode === "jpo" ? DAYS_JPO : DAYS;
   const group = SET_GROUPS[mode] || null;
   const words = group
     ? (setId ? group.find((s) => s.id === setId).words : null)
