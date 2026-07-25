@@ -23,6 +23,7 @@
   - **IT 비즈니스 실무 작문**: 이메일·Slack 메시지·버그 리포트·PR 설명·릴리스 노트·회의록·보고 등 현업 시나리오. 전문성·톤·형식까지 함께 봐 줘요
 - **티타와 영어 회화**: DeepSeek API 기반 AI 티타와 자유롭게 영어로 대화. 티타가 먼저 **이름을 물어보고**, 알려준 이름으로 불러 줘요. 틀린 표현은 한국어로 짧게 교정해 줍니다.
 - **티타 보이스(TTS)**: ElevenLabs 음성으로 단어·문장을 들려줘요
+- **Java 문법·프로그래밍 실습**: 백엔드(Java+Spring) 취업 로드맵을 위한 Java 입문 문법 18유닛. 개념(핵심 한 줄 + 기억 꿀팁 + 규칙) → 예제 코드를 실제로 실행해 보기 → 직접 코드를 짜서 실행+정답 판정까지. 코드 실행은 `JDOODLE_CLIENT_ID`·`JDOODLE_CLIENT_SECRET`(무료 가입) 또는 자체 [Piston](https://github.com/engineer-man/piston) 서버로 실제 컴파일·실행되고, `DEEPSEEK_API_KEY`가 있으면 티타가 한국어로 코드 첨삭도 해 줘요(없어도 실행·채점은 정상 동작)
 
 ## 배포 순서 (전부 마우스 클릭으로 가능)
 
@@ -49,6 +50,8 @@
    | `DEEPSEEK_MODEL` | 기본값은 `deepseek/deepseek-v4-flash`(오픈라우터 모델 슬러그). 다른 모델을 쓰고 싶을 때만 바꿔요 |
    | `KV_REDIS_URL` | **필기 노트를 기기 간에 동기화**하고 싶을 때만 추가. Vercel 프로젝트에서 Storage → Redis(Redis Cloud)를 프리픽스 `KV`로 연결하면 자동으로 채워져요. (`REDIS_URL` 이름도 인식) |
    | `KV_REST_API_URL` / `KV_REST_API_TOKEN` | 위 대신 Upstash(REST 방식)를 쓸 때. Storage → Upstash for Redis 연결 시 자동으로 채워져요. (`UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` 이름도 인식) |
+   | `JDOODLE_CLIENT_ID` / `JDOODLE_CLIENT_SECRET` | **Java 코드 실행**에 필요. [jdoodle.com/compiler-api](https://www.jdoodle.com/compiler-api) 무료 가입(신용카드 불필요, 하루 200회) 후 발급되는 값을 넣으면 Java 코드 실행·정답 판정이 동작해요. (공개 Piston API는 2026-02-15부터 화이트리스트 전용으로 바뀌어 더 이상 기본으로 쓸 수 없어요) |
+   | `PISTON_URL` | JDoodle 대신 **자체 Piston 서버**나 화이트리스트를 발급받은 Piston을 쓸 때만 설정 (예: `https://your-piston.example.com/api/v2/piston`). JDOODLE 값이 설정돼 있으면 그쪽이 우선이니, Piston을 쓰려면 JDOODLE 값은 비워 두세요 |
 
 4. **Deploy** 클릭 → 끝나면 나오는 주소로 접속!
 
