@@ -3,7 +3,8 @@
 // 저장/로드는 page.jsx가 담당하고, 여기서는 규칙만 담습니다.
 //
 // SR 적용 덱(일본어 QA/LQA 취업 로드맵 학습 순서):
-//   類義語(jps) → 複合動詞(jpc) → 副詞·接続(jpd) → オノマトペ(jpo) → 중학 영단어(lib)
+//   四字熟語(jpy) → 類義語(jps) → 複合動詞(jpc) → 副詞·接続(jpd) → 慣用句(jpi)
+//   → オノマトペ(jpo) → 중학 영단어(lib)
 // 일본어를 앞에 두는 이유: 목표가 JLPT N1 고득점(160~170점)이고, N1 語彙는
 // 「言い換え類義」·「用法」처럼 유의어 구분을 묻기 때문에 이 구간이 점수 기여가 가장 크다.
 // 영어(lib)는 버그 리포트 작성·영문 문서 독해용 유지 학습이라 뒤에 배치.
@@ -11,7 +12,7 @@
 // 학습 단계:  new → learned → review1 → review2 → review3(졸업)
 // 복습 간격:  learned +1일 → 1차복습 / review1 +3일 → 2차복습 / review2 +7일 → 3차복습(최종)
 
-export const SR_DECKS = ["jps", "jpc", "jpd", "jpo", "lib"]; // 학습(SR)/졸업 경로 순서
+export const SR_DECKS = ["jpy", "jps", "jpc", "jpd", "jpi", "jpo", "lib"]; // 학습(SR)/졸업 경로 순서
 export const DAILY_CARD_CAP = 60;                   // 하루 총 카드(신규+복습) 상한
 export const GRAD_WINDOW = 3;                        // 졸업 판정에 보는 최근 복습 세션 수
 export const GRAD_ACCURACY = 0.9;                    // 졸업 정답률 임계
