@@ -36,8 +36,11 @@ export async function POST(req) {
         headers: { "xi-api-key": key, "Content-Type": "application/json" },
         body: JSON.stringify({
           text: String(text).slice(0, 600),
-          // 톤 일관성을 위해 multilingual_v2 사용 (turbo보다 운율이 안정적).
-          model_id: "eleven_multilingual_v2",
+          // 일본어를 명시할 수 있는 모델을 사용하고 기본 언어를 일본어로 고정.
+          model_id: "eleven_flash_v2_5",
+          language_code: "ja",
+          // 일본어의 숫자·기호 등을 더 자연스럽게 읽도록 정규화.
+          apply_language_text_normalization: true,
           // seed 고정 → 같은 문장은 매번 (거의) 같은 목소리로 생성 (best-effort 결정론).
           // seed는 voice_settings 안이 아니라 본문 최상위 필드여야 함.
           seed: 12345,
