@@ -1,5 +1,7 @@
 // 브라우저 → (이 서버) → ElevenLabs → 다시 브라우저
 // API 키는 Vercel 환경변수에만 있어서 밖으로 안 새요.
+import { getTtsLanguageOptions } from "./language.mjs";
+
 export const runtime = "nodejs";
 
 export async function POST(req) {
@@ -29,18 +31,19 @@ export async function POST(req) {
       );
     }
 
+    const ttsText = String(text).slice(0, 600);
+    const languageOptions = getTtsLanguageOptions(ttsText);
+
     const res = await fetch(
       "https://api.elevenlabs.io/v1/text-to-speech/" + voiceId + "?output_format=mp3_44100_128",
       {
         method: "POST",
         headers: { "xi-api-key": key, "Content-Type": "application/json" },
         body: JSON.stringify({
-          text: String(text).slice(0, 600),
-          // 일본어를 명시할 수 있는 모델을 사용하고 기본 언어를 일본어로 고정.
+          text: ttsText,
+          // 문장 언어에 맞춰 일본어 또는 영어를 지정한다. 혼합 문장은 자동 판별.
           model_id: "eleven_flash_v2_5",
-          language_code: "ja",
-          // 일본어의 숫자·기호 등을 더 자연스럽게 읽도록 정규화.
-          apply_language_text_normalization: true,
+          ...languageOptions,
           // seed 고정 → 같은 문장은 매번 (거의) 같은 목소리로 생성 (best-effort 결정론).
           // seed는 voice_settings 안이 아니라 본문 최상위 필드여야 함.
           seed: 12345,
