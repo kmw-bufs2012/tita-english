@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "test": "node --test app/api/tts/language.test.mjs",
+    "test": "node --test app/api/tts/language.test.mjs app/api/mnemonic/core.test.mjs",
     "start": "next start"
   },
   "dependencies": {
