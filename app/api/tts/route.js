@@ -1,6 +1,7 @@
 // 브라우저 → (이 서버) → ElevenLabs → 다시 브라우저
 // API 키는 Vercel 환경변수에만 있어서 밖으로 안 새요.
 import { getTtsLanguageOptions } from "./language.mjs";
+import { MAX_TTS_CHARACTERS, prepareTtsText } from "../../lib/ttsText.mjs";
 
 export const runtime = "nodejs";
 
@@ -8,6 +9,14 @@ export async function POST(req) {
   try {
     const { text, simBoost, speakerBoost } = await req.json();
     if (!text) return Response.json({ error: "no text" }, { status: 400 });
+
+    const ttsText = prepareTtsText(text);
+    if (!ttsText) {
+      return Response.json(
+        { error: `텍스트가 너무 길어요. ${MAX_TTS_CHARACTERS}자 이하로 나눠 주세요.` },
+        { status: 413 }
+      );
+    }
 
     const key = process.env.ELEVENLABS_API_KEY;
     const voiceId = process.env.ELEVENLABS_VOICE_ID;
@@ -31,7 +40,6 @@ export async function POST(req) {
       );
     }
 
-    const ttsText = String(text).slice(0, 600);
     const languageOptions = getTtsLanguageOptions(ttsText);
 
     const res = await fetch(
