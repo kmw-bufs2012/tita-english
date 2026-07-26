@@ -104,7 +104,7 @@
    |---|---|
    | `ELEVENLABS_API_KEY` | ElevenLabs API 키 (sk_...) |
    | `ELEVENLABS_VOICE_ID` | My Voices → Tita의 ID (영문+숫자) |
-   | `DEEPSEEK_API_KEY` | openrouter.ai에서 발급한 오픈라우터 API 키 (sk-or-v1-...) — DeepSeek V4 Flash를 오픈라우터 경유로 호출해요 |
+   | `OPENROUTER_API_KEY` 또는 `DEEPSEEK_API_KEY` | openrouter.ai에서 발급한 오픈라우터 API 키 (sk-or-v1-...) — 기존 `DEEPSEEK_API_KEY` 이름도 계속 지원해요 |
    | `AUTH_USER` | **로그인 아이디** (예: `tita`) — 본인만 알아두기 |
    | `AUTH_PASSWORD` | **로그인 비밀번호** (충분히 길고 복잡하게) |
    | `AUTH_SECRET` | 세션 서명용 비밀키 (랜덤 32+자, 예: `openssl rand -hex 32` 결과) |
@@ -131,7 +131,7 @@ npm run dev      # http://localhost:3000
 예시:
 
 ```bash
-DEEPSEEK_API_KEY=여기에_오픈라우터_API_키
+OPENROUTER_API_KEY=여기에_오픈라우터_API_키
 DEEPSEEK_MODEL=deepseek/deepseek-v4-flash
 ELEVENLABS_API_KEY=여기에_ElevenLabs_API_키
 ELEVENLABS_VOICE_ID=여기에_보이스_ID
