@@ -9264,7 +9264,7 @@ function ChatScreen() {
 
   const testVoice = async () => {
     setVoiceMsg("티타 보이스 테스트 중…");
-    const ok = await titaSpeak("Hello! I'm Tita! Nice to meet you!");
+    const ok = await titaSpeak("こんにちは！ティタです。よろしくお願いします！");
     if (ok) { setVoiceMsg("ElevenLabs 티타 보이스 작동 중! 🎉"); return; }
     const err = (typeof window !== "undefined" && window.__titaErr) || { status: 0, detail: "" };
     const s = err.status;
