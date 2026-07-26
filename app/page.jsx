@@ -25,6 +25,7 @@ import {
   completeLearn, completeReview, filterUnseen, expectedDays, getUnit as srGetUnit,
   SR_DECKS, unitKey as srUnitKey,
 } from "./lib/review";
+import { getWordSpeechText } from "./lib/ttsText.mjs";
 import { MIDDLE_GRAMMAR } from "./data/grammar/middle";
 import { HIGH_GRAMMAR } from "./data/grammar/high";
 import { CSAT_GRAMMAR } from "./data/grammar/csat";
@@ -2259,7 +2260,7 @@ function CardsScreen({ learned, markLearned, sr, srLearnUnit, srReviewUnit }) {
       {reviewMode ? (
         flip ? (
           <div className="flex gap-2">
-            <button onClick={() => titaSpeak(w.en)} className="rounded-xl px-3 py-3 press" aria-label="발음 듣기"
+            <button onClick={() => titaSpeak(getWordSpeechText(w))} className="rounded-xl px-3 py-3 press" aria-label="발음 듣기"
               style={{ background: C.card, border: "2px solid " + C.copperSoft, color: C.copper }}>
               <Volume2 size={20} />
             </button>
@@ -2274,7 +2275,7 @@ function CardsScreen({ learned, markLearned, sr, srLearnUnit, srReviewUnit }) {
           </div>
         ) : (
           <div className="flex gap-2">
-            <button onClick={() => titaSpeak(w.en)} className="rounded-xl px-3 py-3 press" aria-label="발음 듣기"
+            <button onClick={() => titaSpeak(getWordSpeechText(w))} className="rounded-xl px-3 py-3 press" aria-label="발음 듣기"
               style={{ background: C.card, border: "2px solid " + C.copperSoft, color: C.copper }}>
               <Volume2 size={20} />
             </button>
@@ -2286,7 +2287,7 @@ function CardsScreen({ learned, markLearned, sr, srLearnUnit, srReviewUnit }) {
         )
       ) : isSr ? (
         <div className="flex gap-2">
-          <button onClick={() => titaSpeak(w.en)} className="rounded-xl px-3 py-3 press" aria-label="발음 듣기"
+          <button onClick={() => titaSpeak(getWordSpeechText(w))} className="rounded-xl px-3 py-3 press" aria-label="발음 듣기"
             style={{ background: C.card, border: "2px solid " + C.copperSoft, color: C.copper }}>
             <Volume2 size={20} />
           </button>
@@ -2301,7 +2302,7 @@ function CardsScreen({ learned, markLearned, sr, srLearnUnit, srReviewUnit }) {
         </div>
       ) : (
         <div className="flex gap-2">
-          <button onClick={() => titaSpeak(w.en)} className="rounded-xl px-3 py-3 press" aria-label="발음 듣기"
+          <button onClick={() => titaSpeak(getWordSpeechText(w))} className="rounded-xl px-3 py-3 press" aria-label="발음 듣기"
             style={{ background: C.card, border: "2px solid " + C.copperSoft, color: C.copper }}>
             <Volume2 size={20} />
           </button>
@@ -2459,7 +2460,7 @@ function QuizScreen({ learned, addXp }) {
       <Panel className="text-center py-6">
         <p className="text-xs mb-2" style={{ color: C.inkSoft }}>이 부품의 뜻은?</p>
         <p className="text-3xl font-bold" style={{ color: C.ink, fontFamily: "'Jua', sans-serif" }}>{w.en}</p>
-        <button onClick={() => titaSpeak(w.en)} className="mt-2 text-xs inline-flex items-center gap-1 press" style={{ color: C.copper }}>
+        <button onClick={() => titaSpeak(getWordSpeechText(w))} className="mt-2 text-xs inline-flex items-center gap-1 press" style={{ color: C.copper }}>
           <Volume2 size={14} /> 발음 듣기
         </button>
       </Panel>
@@ -2813,7 +2814,7 @@ function WritingScreen({ learned, markLearned }) {
         <p className="text-3xl font-bold" style={{ color: C.ink, fontFamily: "'Jua', sans-serif" }}>
           {w.en} <span className="text-base" style={{ color: C.pinkDeep }}>= {w.ko}</span>
         </p>
-        <button onClick={() => titaSpeak(w.en)} className="mt-1 text-xs inline-flex items-center gap-1 press" style={{ color: C.copper }}>
+        <button onClick={() => titaSpeak(getWordSpeechText(w))} className="mt-1 text-xs inline-flex items-center gap-1 press" style={{ color: C.copper }}>
           <Volume2 size={14} /> 발음 듣기
         </button>
       </Panel>
