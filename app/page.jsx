@@ -1454,14 +1454,14 @@ const SR_DECK_META = [
   { deck: "jpd", label: "副詞·接続 200", days: DAYS_JPD },
   { deck: "jpi", label: "慣用句 200", days: DAYS_JPI },
   { deck: "jpo", label: "オノマトペ 100", days: DAYS_JPO },
-  { deck: "jpt", label: "N1 tail 600", days: DAYS_JPT },
+  { deck: "jpt", label: "N1 tail 800", days: DAYS_JPT },
   { deck: "jpq", label: "QA·LQA 용어 200", days: DAYS_JPQ },
   { deck: "lib", label: "중학 1500", days: DAYS },
 ];
 const SR_DECK_LABEL = {
   jpy: "四字熟語 100", jps: "類義語 200", jpc: "複合動詞 200",
   jpd: "副詞·接続 200", jpi: "慣用句 200", jpo: "オノマトペ 100",
-  jpt: "N1 tail 600", jpq: "QA·LQA 용어 200", lib: "중학 1500",
+  jpt: "N1 tail 800", jpq: "QA·LQA 용어 200", lib: "중학 1500",
 };
 /* 다음 추천 덱 (졸업 시 이동 제안).
    四字熟語를 맨 앞에 둔 이유: 한국 사자성어와 상당 부분 겹쳐 투자 대비 회수가 가장 빠르다
@@ -1840,7 +1840,7 @@ function ModeTabs({ mode, setMode }) {
     { id: "jpd", label: "副詞·接続 200" },
     { id: "jpi", label: "慣用句 200" },
     { id: "jpo", label: "オノマトペ 100" },
-    { id: "jpt", label: "N1 tail 600" },
+    { id: "jpt", label: "N1 tail 800" },
     { id: "jpq", label: "QA·LQA 용어 200" },
     { id: "lib", label: "중학 1500" },
   ];
